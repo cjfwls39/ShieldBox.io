@@ -1,0 +1,34 @@
+{
+  "hash_rates": {
+    "md5":      { "pc": 1000000000,   "gpu": 16400000000, "quantum": 100000000000000 },
+    "sha256":   { "pc": 500000000,    "gpu": 3500000000,  "quantum": 10000000000000 },
+    "sha512":   { "pc": 200000000,    "gpu": 3500000000,  "quantum": 10000000000000 },
+    "bcrypt":   { "pc": 100,          "gpu": 5000,        "quantum": 10000000 },
+    "scrypt":   { "pc": 50,           "gpu": 500,         "quantum": 1000000 },
+    "argon2id": { "pc": 10,           "gpu": 50,          "quantum": 500000 }
+  },
+  "algo_strength": {
+    "md5":      1e-9,
+    "sha256":   0.1,
+    "sha512":   0.2,
+    "bcrypt":   0.9,
+    "scrypt":   1.0,
+    "argon2id": 1.0
+  },
+  "algo_ceiling": {
+    "md5":      "D",
+    "sha256":   "B",
+    "sha512":   "B",
+    "bcrypt":   "S",
+    "scrypt":   "S",
+    "argon2id": "S"
+  },
+  "attack_multipliers": {
+    "brute_force":         1.0,
+    "rainbow_table":       1e-8,
+    "mask_attack":         0.001,
+    "rule_based":          0.005,
+    "side_channel":        0.01,
+    "credential_stuffing": 1e-9
+  }
+}
