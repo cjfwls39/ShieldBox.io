@@ -11,6 +11,7 @@ const bruteForceTmpl        = require('./reportTemplates/bruteForceTemplate');
 const credentialStuffingTmpl = require('./reportTemplates/credentialStuffingTemplate');
 const maskAttackTmpl        = require('./reportTemplates/maskAttackTemplate');
 const ruleBasedTmpl         = require('./reportTemplates/ruleBasedTemplate');
+const collisionTmpl         = require('./reportTemplates/collisionTemplate');
 
 /**
  * [공격 엔진 - 템플릿 매핑 테이블]
@@ -23,6 +24,7 @@ const attackReportTemplates = {
   credential_stuffing: credentialStuffingTmpl,
   mask_attack:        maskAttackTmpl,
   rule_based:         ruleBasedTmpl,
+  collision_attack:   collisionTmpl,
 };
 
 /**

@@ -26,6 +26,7 @@ const attackEngines = {
   mask_attack:        require('./engines/attacks/maskAttack'),
   rule_based:         require('./engines/attacks/ruleBased'),
   credential_stuffing:require('./engines/attacks/credentialStuffing'),
+  collision_attack:   require('./engines/attacks/collisionAttack'),
 };
 
 // 해싱 엔진 로드

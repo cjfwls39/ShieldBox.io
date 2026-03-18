@@ -1,6 +1,6 @@
 import React from 'react';
 import { 
-  Flame, BookOpen, Layers, Network, GitBranch, Radio, Wifi, 
+  Flame, BookOpen, Layers, Network, GitBranch, Radio, Wifi, GitMerge,
   Cpu, Server, HardDrive, Binary, Fingerprint, Database, History, Zap
 } from 'lucide-react';
 
@@ -42,6 +42,11 @@ export const ATTACK_METHODS = [
     id: 'side_channel', label: 'Side-Channel', icon: <Wifi size={16}/>,
     color: 'text-slate-400', border: 'border-slate-400/40', bg: 'bg-slate-400/5',
     tip: '알고리즘의 실행 시간이나 전력 소모 등 물리적 신호를 분석하여 암호 키를 유추합니다.' 
+  },
+  { 
+    id: 'collision_attack', label: 'Collision Attack', icon: <GitMerge size={16}/>,
+    color: 'text-rose-400', border: 'border-rose-400/40', bg: 'bg-rose-400/5',
+    tip: '서로 다른 두 입력이 동일한 해시값을 만드는 수학적 충돌을 이용해 서명·무결성 검증을 우회합니다. 비밀번호 길이와 무관하게 알고리즘 자체의 취약성이 결정합니다.' 
   }
 ];
 
@@ -95,6 +100,12 @@ export const ATTACK_PARAMS = {
     params: ['intensity'],
     ranges: {
       intensity: { min: 1, max: 10, step: 1, unit: '', label: '샘플링 정밀도' }
+    }
+  },
+  collision_attack: {
+    params: ['intensity'],
+    ranges: {
+      intensity: { min: 1, max: 10, step: 1, unit: '', label: '연산 집중도' }
     }
   }
 };

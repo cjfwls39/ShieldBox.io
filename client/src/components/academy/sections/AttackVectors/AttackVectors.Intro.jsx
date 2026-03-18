@@ -18,8 +18,8 @@ export default function AttackVectorsIntro({ data, onStart }) {
         </motion.div>
         
         <div className="space-y-6">
-          <h1 className="text-8xl font-black italic text-text-bright uppercase tracking-tighter leading-[0.95] whitespace-pre-line py-4">
-            {definition.main.replace("'논", "\n'논")}
+          <h1 className="text-8xl font-black italic text-text-bright uppercase tracking-tighter leading-[0.9] py-4">
+            {definition.main}
           </h1>
           <p className="text-2xl text-text-dim font-medium max-w-3xl mx-auto leading-relaxed break-keep">
             {definition.sub}
