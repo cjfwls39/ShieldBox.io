@@ -107,10 +107,10 @@ const ReportModal = ({ engine }) => {
                   {summary}
                 </h2>
                 <div className="flex flex-wrap gap-2 justify-center md:justify-start mt-4">
-                  <span className="px-3 py-1 bg-white/40 border border-border-subtle rounded-full text-[10px] font-black text-text-dim font-mono uppercase">
+                  <span className="px-3 py-1 bg-bg-input border border-border-subtle rounded-full text-[10px] font-black text-text-dim font-mono uppercase">
                     {attackVector}
                   </span>
-                  <span className="px-3 py-1 bg-white/40 border border-border-subtle rounded-full text-[10px] font-black text-text-dim font-mono uppercase">
+                  <span className="px-3 py-1 bg-bg-input border border-border-subtle rounded-full text-[10px] font-black text-text-dim font-mono uppercase">
                     {cryptoAnalysis}
                   </span>
                 </div>
@@ -142,7 +142,7 @@ const ReportModal = ({ engine }) => {
               </div>
               <div className="grid md:grid-cols-3 gap-6 relative">
                 {narrative.map((item, idx) => (
-                  <div key={idx} className="bg-white border border-border-subtle p-8 rounded-3xl relative group hover:shadow-xl transition-all">
+                  <div key={idx} className="bg-bg-card border border-border-subtle p-8 rounded-3xl relative group hover:shadow-xl transition-all">
                     {/* [수정1] 스텝 번호 배경색 → theme.stepBg로 통일 */}
                     <span className={`absolute -top-3 -left-3 w-10 h-10 ${theme.stepBg} text-white rounded-xl flex items-center justify-center font-black text-sm font-mono shadow-lg`}>
                       {item.step}

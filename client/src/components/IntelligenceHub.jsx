@@ -21,9 +21,9 @@ const IntelligenceHub = ({ crackTimes, config, isShielded }) => {
 
   return (
     /* 원본 폼 디자인: flex-[1.5], bg-bg-card, rounded-[2rem], shadow-sm */
-    <div className="flex-[1.5] bg-bg-card border border-border-subtle rounded-[2rem] p-6 shadow-sm flex flex-col gap-4 overflow-hidden">
+    <div className="intel-hub flex-[1.5] bg-bg-card border border-border-subtle rounded-[2rem] p-4 md:p-6 shadow-sm flex flex-col gap-4 overflow-hidden">
       
-      {/* 1. 타이틀 섹션 (원본 스타일 유지) */}
+      {/* 타이틀 */}
       <div className="flex items-center gap-2 shrink-0">
         <Activity size={16} className="text-brand-primary" />
         <h3 className="text-xs font-black text-text-bright uppercase tracking-widest font-mono">
@@ -31,14 +31,14 @@ const IntelligenceHub = ({ crackTimes, config, isShielded }) => {
         </h3>
       </div>
 
-      {/* 2. 하드웨어 시나리오 그리드 (원본 색상 및 레이아웃 복구) */}
-      <div className="grid grid-cols-3 gap-3 shrink-0">
+      {/* 하드웨어 시나리오 그리드: 모바일 1열 → sm 이상 3열 */}
+      <div className="intel-grid grid grid-cols-1 sm:grid-cols-3 gap-2 md:gap-3 shrink-0">
         {displayItems.map(item => (
-          <div 
-            key={item.key} 
-            className={`${item.bg} border ${item.border} py-4 px-3 rounded-2xl flex flex-col items-center gap-1.5`}
+          <div
+            key={item.key}
+            className={`${item.bg} border ${item.border} py-3 md:py-4 px-3 rounded-2xl flex flex-col sm:flex-col flex-row items-center sm:gap-1.5 gap-3`}
           >
-            <span className="text-[9px] font-bold text-text-dim uppercase tracking-widest font-mono">
+            <span className="text-[9px] font-bold text-text-dim uppercase tracking-widest font-mono whitespace-nowrap">
               {item.label}
             </span>
             <span className={`text-xs font-black ${item.color} text-center font-mono`}>

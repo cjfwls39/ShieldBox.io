@@ -1,55 +1,71 @@
 @import "tailwindcss";
 
-/* 1. 폰트 임포트 (IBM Plex Sans KR & JetBrains Mono) */
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700;800&family=Inter:wght@400;700;900&display=swap");
+/* 1. Pretendard 및 JetBrains Mono 임포트 */
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css');
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap");
 
 /* 2. 디자인 시스템 설정 */
 @theme {
-  /* 한글은 IBM Plex Sans KR, 영문은 Inter를 우선 적용 */
-  --font-main: "Inter", "IBM Plex Sans KR", system-ui, sans-serif;
+  --font-main: "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
   --font-mono: "JetBrains Mono", monospace;
 
-  /* 브랜드 핵심 색상 */
-  --color-brand-primary: #1d4ed8;    /* 더 진하고 선명한 로열 블루 */
-  --color-brand-accent: #059669;     /* 가독성 높은 에메랄드 그린 */
-  --color-brand-danger: #dc2626;     /* 시인성 좋은 레드 */
+  /* 브랜드 색상 — 라이트/다크 공용 기준값
+     각 모드별 오버라이드는 :root / [data-theme='dark'] 에서 처리 */
+  --color-brand-primary: #2563eb;
+  --color-brand-accent:  #059669;
+  --color-brand-danger:  #dc2626;
 
-  /* 테마별 변수 매핑 */
-  --color-bg-main: var(--bg-main);
-  --color-bg-card: var(--bg-card);
-  --color-bg-input: var(--bg-input);
-  --color-text-base: var(--text-base);
-  --color-text-bright: var(--text-bright);
-  --color-text-dim: var(--text-dim);
+  /* 테마 변수 */
+  --color-bg-main:       var(--bg-main);
+  --color-bg-card:       var(--bg-card);
+  --color-bg-input:      var(--bg-input);
+  --color-text-base:     var(--text-base);
+  --color-text-bright:   var(--text-bright);
+  --color-text-dim:      var(--text-dim);
   --color-border-subtle: var(--border-subtle);
-
-  /* 디자인 가이드 */
-  --radius-panel: 2rem;
-  --radius-button: 1rem;
-  --font-main: "Inter", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", "Fira Code", monospace;
 }
 
-/* ☀️ Light Mode: 높은 명도 대비로 가독성 확보 */
+/* ══════════════════════════════════════════════
+   ☀️  LIGHT MODE — Warm Stone
+   설계 기준:
+   - 순백 배경 제거 → 황색조로 청색광 구조적 완화
+   - bg 3계층이 명확히 구분 (main/card/input)
+   - text-dim을 소형 bold 텍스트에서 4:1 이상 확보
+   대비율: text-bright/bg-main ≈ 14:1 / text-base/bg-card ≈ 8:1 / text-dim/bg-card ≈ 4.5:1
+══════════════════════════════════════════════ */
 :root {
-  --bg-main: #f1f5f9;        /* 밝고 깨끗한 Slate 100 */
-  --bg-card: #ffffff;        /* 순백색 카드 */
-  --bg-input: #f8fafc;       /* 아주 연한 회색 입력창 */
-  --text-base: #334155;      /* 깊이 있는 Slate 700 (기본 글자) */
-  --text-bright: #0f172a;    /* 거의 검은색인 Slate 900 (헤드라인) */
-  --text-dim: #64748b;       /* 차분한 Slate 500 (보조 텍스트) */
-  --border-subtle: #cbd5e1;  /* 경계가 확실한 Slate 300 */
+  --bg-main:      #f5f0e8;   /* 따뜻한 황색조 — 순백 대비 눈부심 없음 */
+  --bg-card:      #ede7d8;   /* 카드: main보다 한 단계 진하게 (뜨는 느낌) */
+  --bg-input:     #e3dcc8;   /* 인풋: card보다 진하게 (눌린 느낌) */
+  --text-base:    #3d3325;   /* 본문: 따뜻한 다크 브라운 */
+  --text-bright:  #1c1610;   /* 강조: 거의 검정에 가까운 브라운 */
+  --text-dim:     #7a6a52;   /* 보조: 황갈색 — 배경 대비 4.5:1 확보 */
+  --border-subtle:#c8bfaf;   /* 경계선: bg-card 위에서 자연스럽게 구분 */
+
+  /* 라이트모드 브랜드 컬러 오버라이드 — 밝은 배경에서 선명하게 */
+  --color-brand-primary: #1d4ed8;
+  --color-brand-danger:  #b91c1c;
+  --color-brand-accent:  #047857;
 }
 
-/* 🌙 Dark Mode: 눈의 피로도를 낮춘 고대비 테마 */
+/* ══════════════════════════════════════════════
+   🌙  DARK MODE — Soft Dark (쿨 네이비 슬레이트)
+   warm ↔ cool 색조 전환으로 모드 전환이 확실하게 느껴짐
+   대비율: text-bright/bg-main ≈ 11:1 / text-base/bg-card ≈ 6:1 / text-dim/bg-card ≈ 4:1
+══════════════════════════════════════════════ */
 [data-theme='dark'] {
-  --bg-main: #020617;        /* 깊은 심해색 Slate 950 */
-  --bg-card: #0f172a;        /* 차분한 Slate 900 */
-  --bg-input: #000000;       /* 완전 검정 */
-  --text-base: #94a3b8;      /* 부드러운 Slate 400 */
-  --text-bright: #f8fafc;    /* 깨끗한 Slate 50 */
-  --text-dim: #475569;       /* 어두운 Slate 600 */
-  --border-subtle: #1e293b;  /* 은은한 Slate 800 */
+  --bg-main:      #141f2e;   /* 딥 쿨 네이비 */
+  --bg-card:      #1c2b3d;   /* 카드: 배경 위에서 뜨게 */
+  --bg-input:     #162336;   /* 인풋: 카드보다 어둡게 (눌린 느낌) */
+  --text-base:    #a8bcd0;   /* 본문: 쿨 슬레이트 블루 */
+  --text-bright:  #dce8f0;   /* 강조: 오프화이트 */
+  --text-dim:     #8fa3bd;   /* 보조: 소형 라벨 4:1 확보 */
+  --border-subtle:#2a3f57;   /* 경계선: 카드 위 레이어 구분 */
+
+  /* 다크모드 브랜드 컬러 오버라이드 — 어두운 배경에서 선명하게 */
+  --color-brand-primary: #4f8ef7;
+  --color-brand-danger:  #f87171;
+  --color-brand-accent:  #10b981;
 }
 
 @layer base {
@@ -57,7 +73,185 @@
     background-color: var(--color-bg-main);
     color: var(--color-text-base);
     font-family: var(--font-main);
-    transition: all 0.3s ease;
+    /* 가독성 핵심: 자간 조절 */
+    letter-spacing: -0.025em; 
+    line-height: 1.6;
+    transition: background-color 0.3s ease, color 0.3s ease;
     margin: 0;
+  }
+
+  /* 모든 태그에 폰트 강제 적용 */
+  *, *::before, *::after {
+    font-family: var(--font-main);
+  }
+
+  /* 텍스트 선택 하이라이트 — 라이트(황색조) / 다크(파란조) */
+  ::selection {
+    background-color: #c8a86644;
+    color: var(--color-text-bright);
+  }
+  [data-theme='dark'] ::selection {
+    background-color: #4f8ef733;
+    color: var(--color-text-bright);
+  }
+}
+
+/* ── 커스텀 스크롤바 ── */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--border-subtle);
+  border-radius: 999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--text-dim);
+}
+
+/* ── input placeholder ── */
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-dim);
+  opacity: 0.6;
+}
+
+/* ════════════════════════════════════════════
+   반응형 미디어 쿼리
+   xs  : 475px   (소형 폰)
+   sm  : 640px   (일반 폰)
+   md  : 768px   (태블릿)
+   lg  : 1024px  (소형 데스크톱 / 주력)
+   xl  : 1280px  (데스크톱)
+   2xl : 1536px  (대형 모니터)
+════════════════════════════════════════════ */
+
+/* xs 브레이크포인트 — Tailwind 기본에 없으므로 @theme에 추가 */
+@theme {
+  --breakpoint-xs: 475px;
+}
+
+/* ── xs 미만 (< 475px): 극소형 폰 ── */
+@media (max-width: 474px) {
+  /* 전체 패딩 최소화 */
+  .app-root { padding: 0.5rem !important; }
+
+  /* 헤더 로고 텍스트 축소 */
+  .header-logo-text { font-size: 1rem !important; }
+
+  /* 배지 숨김 */
+  .header-badge { display: none !important; }
+}
+
+/* ── sm 미만 (< 640px): 일반 폰 ── */
+@media (max-width: 639px) {
+  /* 앱 전체: overflow-hidden → auto로 전환해 스크롤 허용 */
+  .app-root {
+    height: auto !important;
+    min-height: 100svh;
+    overflow-y: auto !important;
+    padding: 0.75rem !important;
+  }
+
+  /* 시뮬레이션 그리드: 고정 높이 해제 → 스택 레이아웃 */
+  .sim-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    height: auto !important;
+    min-height: unset !important;
+    overflow: visible !important;
+  }
+
+  /* aside / main: 고정 높이 해제 */
+  .sim-aside,
+  .sim-main {
+    height: auto !important;
+    min-height: unset !important;
+    overflow: visible !important;
+  }
+
+  /* IntelligenceHub 3열 → 1열 */
+  .intel-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ── md 미만 (< 768px): 태블릿 하단 ── */
+@media (max-width: 767px) {
+  /* 헤더: 세로 2줄 레이아웃으로 전환 */
+  .header-row {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  /* nav를 두 번째 줄로 내려서 로고와 분리 */
+  .header-nav {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* 배지는 로고 줄 오른쪽 유지 */
+  .header-actions {
+    margin-left: auto;
+  }
+
+  /* 아카데미 카드 높이 축소 */
+  .academy-card {
+    min-height: 220px !important;
+  }
+}
+
+/* ── lg 미만 (< 1024px): 태블릿 / 작은 노트북 ── */
+@media (max-width: 1023px) {
+  /* 시뮬레이션 영역: 세로 스크롤 허용 */
+  .app-root {
+    height: auto !important;
+    min-height: 100svh;
+    overflow-y: auto !important;
+  }
+
+  .sim-grid {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Terminal 최소 높이 보장 */
+  .monitor-terminal {
+    min-height: 280px;
+    flex: none !important;
+  }
+
+  /* IntelligenceHub 최소 높이 */
+  .intel-hub {
+    flex: none !important;
+    min-height: 180px;
+  }
+}
+
+/* ── xl 이상 (≥ 1280px): 대형 데스크톱 ── */
+@media (min-width: 1280px) {
+  /* 넓은 화면에서 패딩 여유 */
+  .app-root { padding: 1.5rem !important; }
+}
+
+/* ── 기기 방향: 가로모드 폰 ── */
+@media (max-width: 896px) and (orientation: landscape) and (max-height: 500px) {
+  .app-root {
+    height: auto !important;
+    overflow-y: auto !important;
+    padding: 0.5rem !important;
+  }
+  /* 헤더 패딩 축소 */
+  .header-row { padding-bottom: 0.5rem !important; }
+}
+
+/* ── 고해상도 디스플레이 (Retina) ── */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  /* 얇은 선을 0.5px처럼 보이게 */
+  .border-subtle-thin {
+    border-width: 0.5px;
   }
 }

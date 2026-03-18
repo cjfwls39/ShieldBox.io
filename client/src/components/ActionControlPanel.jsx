@@ -125,9 +125,12 @@ const ActionControlPanel = ({ engine }) => {
                             <button
                               disabled={isInternalSaltAlgo}
                               onClick={() => setConfig({ ...config, useSalt: !config.useSalt })}
-                              className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${config.useSalt || isInternalSaltAlgo ? 'bg-emerald-500' : 'bg-border-subtle'} ${isInternalSaltAlgo ? 'opacity-80 cursor-not-allowed' : ''}`}
+                              className={`relative w-12 h-7 rounded-full transition-colors duration-200 overflow-hidden ${config.useSalt || isInternalSaltAlgo ? 'bg-emerald-500' : 'bg-border-subtle'} ${isInternalSaltAlgo ? 'opacity-80 cursor-not-allowed' : ''}`}
                             >
-                              <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${config.useSalt || isInternalSaltAlgo ? 'translate-x-6' : 'translate-x-1'}`} />
+                              <span
+                                className="absolute top-1 w-5 h-5 rounded-full bg-white shadow transition-all duration-200"
+                                style={{ left: config.useSalt || isInternalSaltAlgo ? '23px' : '4px' }}
+                              />
                             </button>
                           </div>
 
