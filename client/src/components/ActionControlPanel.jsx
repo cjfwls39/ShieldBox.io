@@ -2,15 +2,14 @@
  * ShieldBox.io - Strategic Action Control Panel (Fully Fixed)
  * [위치] src/components/ActionControlPanel.jsx
  * [수정 사항]
- * 1. 공격 기법 선택 시 attackConfig.method가 'brute_force'로 고정되던 버그 수정
- * 2. 분석 시작 시 socket.emit 대신 engine.startAttack()을 호출하여 Cleanup 로직 보장
- * 3. 원본의 2단계 Depth UI 및 애니메이션 스타일 100% 보존
+ * 1. 암호화/공격 연산 시 UI 동결 방지를 위한 비동기 로딩 상태 추가
+ * 2. 원본의 2단계 Depth UI 및 애니메이션 스타일 100% 보존
  */
 
-import React from 'react';
+import React, { useState } from 'react'; // useState 추가
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Settings, ChevronRight, Shield, Sword, Sliders, Cpu 
+  Settings, ChevronRight, Shield, Sword, Sliders, Cpu, RefreshCw // RefreshCw 추가
 } from 'lucide-react';
 import { 
   ALGORITHMS, ALGO_PARAMS, ATTACK_METHODS, ATTACK_PARAMS, HARDWARE_OPTIONS 
@@ -21,8 +20,11 @@ const ActionControlPanel = ({ engine }) => {
     pw, config, setConfig, isShielded, 
     attackConfig, setAttackConfig, selectedAlgo, setSelectedAlgo,
     selectedAttackMethod, setSelectedAttackMethod, selectedHardware, 
-    setSelectedHardware, socket, resetEngine, startAttack // startAttack 추가 연동
+    setSelectedHardware, socket, resetEngine, startAttack 
   } = engine;
+
+  // --- [추가] 연산 중 상태 관리 ---
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // 특정 알고리즘(Bcrypt, Argon2id, Scrypt)은 설계상 솔트가 필수입니다.
   const isInternalSaltAlgo = ['bcrypt', 'argon2id', 'scrypt'].includes(config.algorithm);
@@ -31,6 +33,21 @@ const ActionControlPanel = ({ engine }) => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
     const pepper = Array.from({ length: 32 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
     setConfig(prev => ({ ...prev, pepperValue: pepper, usePepper: true }));
+  };
+
+  // --- [추가] 무거운 연산 실행을 위한 래퍼 함수 ---
+  const handleAsyncAction = (actionFn) => {
+    if (isProcessing) return;
+    setIsProcessing(true);
+    
+    // 브라우저가 '로딩 중' UI를 그릴 수 있도록 50ms의 틱을 줍니다.
+    setTimeout(async () => {
+      try {
+        await actionFn();
+      } finally {
+        setIsProcessing(false);
+      }
+    }, 50);
   };
 
   return (
@@ -70,8 +87,14 @@ const ActionControlPanel = ({ engine }) => {
                       </button>
                     ))}
                   </div>
-                  <button onClick={() => socket.emit('start_hashing', { password: pw, algorithm: config.algorithm, config })} className="w-full bg-brand-primary py-3.5 rounded-xl font-black text-white text-xs shrink-0 font-mono tracking-widest shadow-lg flex items-center justify-center gap-2">
-                    <Shield size={14}/> INITIATE SHIELDING
+                  {/* [수정] 클릭 시 로딩 상태 적용 */}
+                  <button 
+                    disabled={isProcessing || !pw}
+                    onClick={() => handleAsyncAction(() => socket.emit('start_hashing', { password: pw, algorithm: config.algorithm, config }))} 
+                    className="w-full bg-brand-primary py-3.5 rounded-xl font-black text-white text-xs shrink-0 font-mono tracking-widest shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {isProcessing ? <RefreshCw size={14} className="animate-spin" /> : <Shield size={14}/>}
+                    {isProcessing ? 'SHIELDING...' : 'INITIATE SHIELDING'}
                   </button>
                 </motion.div>
               ) : (
@@ -151,8 +174,14 @@ const ActionControlPanel = ({ engine }) => {
                           </div>
                         </div>
                       </div>
-                      <button onClick={() => socket.emit('start_hashing', { password: pw, algorithm: config.algorithm, config })} className="w-full bg-brand-primary py-3.5 rounded-xl font-black text-white text-xs shrink-0 font-mono tracking-widest flex items-center justify-center gap-2">
-                        <Shield size={14}/> APPLY & SHIELDING
+                      {/* [수정] 클릭 시 로딩 상태 적용 */}
+                      <button 
+                        disabled={isProcessing || !pw}
+                        onClick={() => handleAsyncAction(() => socket.emit('start_hashing', { password: pw, algorithm: config.algorithm, config }))} 
+                        className="w-full bg-brand-primary py-3.5 rounded-xl font-black text-white text-xs shrink-0 font-mono tracking-widest flex items-center justify-center gap-2 disabled:opacity-50"
+                      >
+                        {isProcessing ? <RefreshCw size={14} className="animate-spin" /> : <Shield size={14}/>}
+                        {isProcessing ? 'SHIELDING...' : 'APPLY & SHIELDING'}
                       </button>
                     </motion.div>
                   );
@@ -165,7 +194,7 @@ const ActionControlPanel = ({ engine }) => {
           <motion.div key="attack-flow" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col h-full">
             <div className="flex justify-between items-center mb-4 shrink-0">
               <div className="flex items-center gap-2">
-                {(selectedAttackMethod || selectedHardware) && (
+                { (selectedAttackMethod || selectedHardware) && (
                   <button onClick={() => selectedHardware ? setSelectedHardware(null) : setSelectedAttackMethod(null)} className="p-1.5 rounded-lg hover:bg-bg-input text-text-dim hover:text-text-bright transition-all"><ChevronRight size={16} className="rotate-180"/></button>
                 )}
                 <Sword size={14} className="text-brand-danger"/>
@@ -183,7 +212,6 @@ const ActionControlPanel = ({ engine }) => {
                       key={m.id} 
                       onClick={() => {
                         setSelectedAttackMethod(m.id);
-                        // 🚨 [핵심 수정] 서버 전송용 attackConfig 내의 method ID를 동기화합니다.
                         setAttackConfig(prev => ({ ...prev, method: m.id }));
                       }} 
                       className={`w-full p-4 rounded-2xl border-2 text-left flex items-center gap-4 transition-all border-border-subtle bg-bg-input hover:${m.border} hover:${m.bg}`}
@@ -254,9 +282,14 @@ const ActionControlPanel = ({ engine }) => {
                       </button>
                     ))}
                   </div>
-                  {/* 🚨 [핵심 수정] 무지성 socket.emit 대신 cleanup 로직이 포함된 startAttack을 호출합니다. */}
-                  <button onClick={startAttack} className="w-full bg-brand-danger py-3.5 rounded-xl font-black text-white text-xs font-mono tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-brand-danger/20">
-                    <Sword size={14}/> INITIATE ATTACK
+                  {/* [수정] 클릭 시 로딩 상태 적용 */}
+                  <button 
+                    disabled={isProcessing}
+                    onClick={() => handleAsyncAction(startAttack)} 
+                    className="w-full bg-brand-danger py-3.5 rounded-xl font-black text-white text-xs font-mono tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-brand-danger/20 disabled:opacity-50"
+                  >
+                    {isProcessing ? <RefreshCw size={14} className="animate-spin" /> : <Sword size={14}/>}
+                    {isProcessing ? 'ANALYZING...' : 'INITIATE ATTACK'}
                   </button>
                 </motion.div>
               )}
