@@ -40,21 +40,24 @@ const ReportModal = ({ engine }) => {
       bg:          'bg-brand-primary/10',
       border:      'border-brand-primary',
       text:        'text-brand-primary',
-      stepBg:      'bg-brand-primary',   // [수정1] 스텝 번호 배경
+      stepBg:      'bg-brand-primary',
+      blurBg:      'bg-brand-primary',   // ✅ 완전한 클래스명 — purge 대응
     };
     if (['B', 'C'].includes(g)) return {
       color:       'amber-500',
       bg:          'bg-amber-500/10',
       border:      'border-amber-500',
       text:        'text-amber-500',
-      stepBg:      'bg-amber-500',       // [수정1] 스텝 번호 배경
+      stepBg:      'bg-amber-500',
+      blurBg:      'bg-amber-500',       // ✅ 완전한 클래스명 — purge 대응
     };
     return {
       color:       'brand-danger',
       bg:          'bg-brand-danger/10',
       border:      'border-brand-danger',
       text:        'text-brand-danger',
-      stepBg:      'bg-brand-danger',    // [수정1] 스텝 번호 배경
+      stepBg:      'bg-brand-danger',
+      blurBg:      'bg-brand-danger',    // ✅ 완전한 클래스명 — purge 대응
     };
   };
 
@@ -87,7 +90,7 @@ const ReportModal = ({ engine }) => {
             <div className="flex flex-col md:flex-row items-center gap-8">
               {/* 등급 박스 */}
               <div className="relative group">
-                <div className={`absolute inset-0 blur-3xl opacity-20 bg-${theme.color}`} />
+                <div className={`absolute inset-0 blur-3xl opacity-20 ${theme.blurBg}`} />
                 <div className={`w-32 h-32 rounded-3xl border-4 ${theme.border} ${theme.bg} flex flex-col items-center justify-center shadow-2xl relative z-10 transform group-hover:rotate-6 transition-transform`}>
                   <span className={`text-6xl font-black font-mono ${theme.text}`}>
                     {grade ? grade.charAt(0) : 'N/A'}

@@ -18,22 +18,25 @@ import { VERDICT_STYLE, phaseLabel, stepTitle, stepSubLabel, bodyBase, bodyDim, 
  * @param {'primary'|'danger'} accent
  */
 export function BackHeader({ onBack, section, accent = 'primary' }) {
-  const accentColor = accent === 'danger' ? 'brand-danger' : 'brand-primary';
-  const hoverBg     = `hover:bg-${accentColor}`;
-  const textAccent  = `text-${accentColor}`;
+  // ✅ 완전한 클래스명 사전 정의 — Tailwind purge 대응
+  const ACCENT = {
+    primary: { hoverBg: 'hover:bg-brand-primary', textAccent: 'text-brand-primary' },
+    danger:  { hoverBg: 'hover:bg-brand-danger',  textAccent: 'text-brand-danger'  },
+  };
+  const ac = ACCENT[accent] ?? ACCENT.primary;
 
   return (
     <header className="flex items-center gap-4 shrink-0 px-6 pt-4 pb-2">
       <button
         onClick={onBack}
-        className={`p-2 bg-bg-card ${hoverBg} rounded-xl text-text-bright hover:text-white border border-border-subtle transition-all shadow-sm group`}
+        className={`p-2 bg-bg-card ${ac.hoverBg} rounded-xl text-text-bright hover:text-white border border-border-subtle transition-all shadow-sm group`}
       >
         <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
       </button>
       <nav className="flex items-center gap-2 font-black text-[10px] tracking-widest uppercase text-text-dim">
         <span>ACADEMY</span>
-        <ChevronRight size={12} className={textAccent} />
-        <span className={`${textAccent} italic`}>{section}</span>
+        <ChevronRight size={12} className={ac.textAccent} />
+        <span className={`${ac.textAccent} italic`}>{section}</span>
       </nav>
     </header>
   );
@@ -130,26 +133,36 @@ export function InfoPanel({ children, className = '' }) {
  * @param {React.ReactNode} bgIcon   - 배경 대형 아이콘 (optional)
  */
 export function InsightFooter({ icon, label, title, body, extra, accent = 'primary', bgIcon }) {
-  const color      = accent === 'danger' ? 'brand-danger' : 'brand-primary';
-  const borderBot  = `border-b-${color}`;
-  const iconBg     = `bg-${color}/15`;
-  const iconBorder = `border-${color}/30`;
-  const iconText   = `text-${color}`;
-  const labelText  = `text-${color}`;
+  // ✅ 완전한 클래스명 사전 정의 — 동적 조합 제거 (Tailwind purge 대응)
+  const ACCENT = {
+    primary: {
+      borderBot: 'border-b-brand-primary',
+      iconBg:    'bg-brand-primary/15',
+      iconBorder:'border-brand-primary/30',
+      iconText:  'text-brand-primary',
+    },
+    danger: {
+      borderBot: 'border-b-brand-danger',
+      iconBg:    'bg-brand-danger/15',
+      iconBorder:'border-brand-danger/30',
+      iconText:  'text-brand-danger',
+    },
+  };
+  const ac = ACCENT[accent] ?? ACCENT.primary;
 
   return (
-    <footer className={`p-12 bg-bg-input rounded-[2.5rem] border-2 border-border-subtle flex flex-col md:flex-row gap-10 items-start shadow-2xl border-b-8 ${borderBot} relative overflow-hidden group transition-all text-left mt-20`}>
+    <footer className={`p-12 bg-bg-input rounded-[2.5rem] border-2 border-border-subtle flex flex-col md:flex-row gap-10 items-start shadow-2xl border-b-8 ${ac.borderBot} relative overflow-hidden group transition-all text-left mt-20`}>
       {bgIcon && (
-        <div className={`absolute top-0 right-0 p-8 opacity-[0.04] group-hover:scale-105 transition-transform duration-700 ${iconText}`}>
+        <div className={`absolute top-0 right-0 p-8 opacity-[0.04] group-hover:scale-105 transition-transform duration-700 ${ac.iconText}`}>
           {bgIcon}
         </div>
       )}
-      <div className={`p-5 ${iconBg} rounded-2xl ${iconText} shrink-0 border ${iconBorder} transition-transform group-hover:rotate-6 shadow-lg`}>
+      <div className={`p-5 ${ac.iconBg} rounded-2xl ${ac.iconText} shrink-0 border ${ac.iconBorder} transition-transform group-hover:rotate-6 shadow-lg`}>
         {icon}
       </div>
       <div className="space-y-4 relative z-10 flex-1">
         {label && (
-          <p className={`text-[10px] font-black ${labelText} uppercase tracking-[0.4em] italic`}>{label}</p>
+          <p className={`text-[10px] font-black ${ac.iconText} uppercase tracking-[0.4em] italic`}>{label}</p>
         )}
         {title && (
           <h4 className="text-xl font-black text-text-bright italic uppercase tracking-tight">{title}</h4>
@@ -214,7 +227,7 @@ export function SpectrumBar({ spectrum, currentTier, leftLabel = 'Security Tier'
           const isCurrentTier = tier.tier === currentTier;
           return (
             <div key={tier.tier} className="flex-1 flex flex-col items-center gap-1">
-              <div className={`w-full h-1.5 rounded-full transition-all duration-300 ${tier.color} ${isCurrentTier ? 'opacity-100 scale-y-150' : 'opacity-25'}`} />
+              <div className={`w-full rounded-full transition-all duration-300 ${tier.color} ${isCurrentTier ? 'opacity-100 h-3' : 'opacity-25 h-1.5'}`} />
               {isCurrentTier && (
                 <motion.div
                   layoutId={dotId}

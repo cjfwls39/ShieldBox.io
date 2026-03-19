@@ -20,10 +20,10 @@ function getDanger(value) {
 }
 
 const DANGER_STYLE = {
-  critical: { row: 'border-brand-danger/40 bg-brand-danger/5',   badge: 'bg-brand-danger/15 text-brand-danger border-brand-danger/30',   icon: <AlertTriangle size={14} className="text-brand-danger shrink-0" />,  label: 'CRITICAL' },
-  high:     { row: 'border-amber-400/40 bg-amber-400/5',         badge: 'bg-amber-400/15 text-amber-400 border-amber-400/30',             icon: <AlertTriangle size={14} className="text-amber-400 shrink-0" />,    label: 'HIGH'     },
-  medium:   { row: 'border-brand-primary/30 bg-brand-primary/5', badge: 'bg-brand-primary/10 text-brand-primary border-brand-primary/30', icon: <Clock size={14} className="text-brand-primary shrink-0" />,        label: 'MEDIUM'   },
-  safe:     { row: 'border-emerald-500/30 bg-emerald-500/5',     badge: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30',       icon: <Shield size={14} className="text-emerald-500 shrink-0" />,         label: 'SAFE'     },
+  critical: { row: 'border-brand-danger/40 bg-brand-danger/5',   badge: 'bg-brand-danger/15 text-brand-danger border-brand-danger/30',   icon: <AlertTriangle size={14} className="text-brand-danger shrink-0" />,  label: 'CRITICAL', bar: 'bg-brand-danger'   },
+  high:     { row: 'border-amber-400/40 bg-amber-400/5',         badge: 'bg-amber-400/15 text-amber-400 border-amber-400/30',             icon: <AlertTriangle size={14} className="text-amber-400 shrink-0" />,    label: 'HIGH',     bar: 'bg-amber-400'     },
+  medium:   { row: 'border-brand-primary/30 bg-brand-primary/5', badge: 'bg-brand-primary/10 text-brand-primary border-brand-primary/30', icon: <Clock size={14} className="text-brand-primary shrink-0" />,        label: 'MEDIUM',   bar: 'bg-brand-primary' },
+  safe:     { row: 'border-emerald-500/30 bg-emerald-500/5',     badge: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30',       icon: <Shield size={14} className="text-emerald-500 shrink-0" />,         label: 'SAFE',     bar: 'bg-emerald-500'   },
 };
 
 function parseBreachRow(value) {
@@ -208,7 +208,7 @@ export default function AttackVectorsDetail({ current }) {
             <div className="mt-12 space-y-2">
               <p className="text-[9px] font-black text-text-dim uppercase tracking-widest opacity-60">Success Probability</p>
               <div className="h-1.5 w-full bg-bg-main/50 rounded-full overflow-hidden">
-                <div className={`h-full transition-all duration-1000 ${style.bg.replace('/10', '')}`} style={{ width: probabilityWidth }} />
+                <div className={`h-full transition-all duration-1000 ${style.bar}`} style={{ width: probabilityWidth }} />
               </div>
               <p className="text-[9px] font-black text-text-dim opacity-40 text-right">{probabilityWidth}</p>
             </div>

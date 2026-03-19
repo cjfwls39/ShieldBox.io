@@ -75,8 +75,11 @@ export default function AlgorithmLibraryDetail({ current, algorithms }) {
                     </span>
                     <div className="flex-1 h-2.5 bg-border-subtle/50 rounded-full overflow-hidden">
                       <div
-                        className={`h-full rounded-full transition-all duration-500 ${isCurrent ? algo.bgLight.replace('/10', '/60') : 'bg-border-subtle/30'}`}
-                        style={{ width: barWidth, filter: isCurrent ? 'brightness(1.5)' : 'none' }}
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{
+                          width: barWidth,
+                          backgroundColor: isCurrent ? algo.barColor : 'rgba(100,116,139,0.3)',
+                        }}
                       />
                     </div>
                     {isCurrent && (

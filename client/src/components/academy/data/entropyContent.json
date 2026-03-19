@@ -1,0 +1,238 @@
+{
+  "section_id": "academy_section_04",
+  "title": "THE ENTROPY HUB",
+  "subtitle": "추측의 종말",
+  "description": "왜 비밀번호는 길고 랜덤할수록 유리한가? 수학적 원리부터 실전 생성 전략까지.",
+
+  "phases": [
+
+    {
+      "id": "phase_00_intro",
+      "type": "INTRO",
+      "phase": 0,
+      "estimatedReadMin": 1,
+
+      "hook": "WHY LONG AND RANDOM?",
+      "subHook": "매일 듣는 조언인데, 왜 그래야 하는지 설명해주는 곳은 드뭅니다.",
+      "teaser": "특수문자 하나를 추가하는 것과 자릿수 하나를 늘리는 것. 공격자 입장에서는 상당히 다른 이야기입니다. 그 수학적 배경을 살펴봅니다.",
+      "ctaLabel": "마지막 여정 시작하기",
+
+      "highlights": [
+        { "icon": "📐", "text": "엔트로피의 수학적 원리" },
+        { "icon": "🛡️", "text": "기억하기 쉬운 강력한 암호 전략" },
+        { "icon": "⚡", "text": "K-Shield 생성기 직접 체험" }
+      ]
+    },
+
+    {
+      "id": "phase_01_math",
+      "type": "MATHEMATICAL_PROOF",
+      "phase": 1,
+      "estimatedReadMin": 3,
+
+      "title": "PHASE 01",
+      "subTitle": "길이의 폭발: 엔트로피의 수학",
+      "badge": "Exponential_Growth",
+
+      "narrative": [
+        "보안 연구자들이 자주 지적하는 패턴 중 하나는 '짧고 복잡한' 암호입니다. 특수문자와 대소문자가 섞여 있어도 8자리 수준이라면, 현대의 GPU 클러스터 환경에서는 비교적 짧은 시간 안에 전수 탐색이 가능해집니다.",
+        "보안 강도를 측정하는 지표 중 하나가 '엔트로피(Entropy)'입니다. 예측 불가능성의 크기를 수치화한 것으로, 공격자가 시도해야 하는 계산량을 가늠하는 데 활용됩니다.",
+        "흥미로운 점은, 자릿수가 하나 늘어날 때마다 경우의 수가 선형이 아닌 지수적으로 증가한다는 것입니다. 이 때문에 많은 보안 전문가들이 복잡성보다 길이를 우선시하도록 권고하고 있습니다."
+      ],
+
+      "formula": {
+        "expression": "E = L × log₂(R)",
+        "label": "비밀번호 엔트로피 추정식",
+        "variables": [
+          { "symbol": "E", "name": "Entropy (엔트로피)", "desc": "예측 불가능성을 나타내는 수치. 일반적으로 높을수록 유리합니다." },
+          { "symbol": "L", "name": "Length (길이)",      "desc": "비밀번호의 자릿수. 지수 함수에 영향을 미치는 핵심 변수입니다." },
+          { "symbol": "R", "name": "Range (문자 집합)", "desc": "사용된 문자 종류 수. 소문자=26, 대소문자=52, +숫자=62, +특수=94." }
+        ],
+        "note": "이 식은 각 자리가 독립적으로 무작위 선택된다고 가정할 때의 이론적 추정값입니다. 실제 보안 강도는 사용 패턴, 저장 방식, 알고리즘 등 다양한 요소의 영향을 받습니다."
+      },
+
+      "comparison": [
+        {
+          "label": "8자리 복잡한 암호",
+          "example": "P@ssw0rd",
+          "length": 8,
+          "charsetSize": 94,
+          "bits": 52,
+          "grade": "C",
+          "crackTime": "수 분 ~ 수 시간 (SHA-256 기준)",
+          "verdict": "DANGEROUS",
+          "verdictLabel": "주의",
+          "reason": "특수문자가 포함되어도 자릿수가 짧으면 현대 GPU 환경에서 전수 탐색 범위에 들어올 수 있습니다."
+        },
+        {
+          "label": "18자리 소문자 나열",
+          "example": "qkrgktkxkdskxmfba",
+          "length": 18,
+          "charsetSize": 26,
+          "bits": 84,
+          "grade": "A",
+          "crackTime": "현재 알려진 기술로는 수억 년 이상",
+          "verdict": "SAFE",
+          "verdictLabel": "양호",
+          "reason": "단순해 보여도 자릿수가 길면 경우의 수가 크게 늘어납니다. 물론 예측 가능한 패턴이라면 별개의 이야기입니다."
+        }
+      ],
+
+      "entropyScale": [
+        { "bits": 28,  "grade": "F", "label": "WEAK",        "color": "red",     "desc": "전수탐색 가능 수준",        "example": "8자 이하" },
+        { "bits": 45,  "grade": "C", "label": "MODERATE",    "color": "yellow",  "desc": "상당한 자원이면 위험",      "example": "8~10자" },
+        { "bits": 64,  "grade": "B", "label": "STRONG",      "color": "indigo",  "desc": "일반적 공격 범위 초과",     "example": "12~14자" },
+        { "bits": 90,  "grade": "A", "label": "VERY STRONG", "color": "blue",    "desc": "현재 기술로 현실적 한계",   "example": "16자+" },
+        { "bits": 128, "grade": "S", "label": "UNBREAKABLE", "color": "emerald", "desc": "이론적 우주적 규모 필요",   "example": "20자+" }
+      ],
+
+      "learningGuide": [
+        "문자 집합 크기(R)를 늘리면 엔트로피가 증가하지만, 길이(L)를 늘리는 쪽이 수학적으로 더 큰 효과를 가져옵니다.",
+        "공격자 관점에서는 '어려운 암호'보다 '계산 비용이 많이 드는 긴 암호'를 마주하는 쪽이 더 부담스럽습니다.",
+        "비밀번호를 자주 교체하는 것보다, 처음부터 충분한 길이로 만드는 편이 보안상 더 유리하다는 의견이 많습니다. 다만 유출이 의심되는 경우엔 즉시 변경이 필요합니다."
+      ],
+
+      "hackerQuote": {
+        "text": "슈퍼컴퓨터가 있어도 시간은 유한합니다. 8자리 암호는 비교적 빠르게 처리할 수 있지만, 20자리에 가까워질수록 계산 비용이 급격히 올라가 포기하고 다른 표적으로 이동하는 편이 합리적입니다.",
+        "source": "— 보안 커뮤니티에서 자주 인용되는 공격자 시점"
+      },
+
+      "visualTrigger": "entropy_exponential_graph"
+    },
+
+    {
+      "id": "phase_02_generator",
+      "type": "INTERACTIVE_TOOL",
+      "phase": 2,
+      "estimatedReadMin": 4,
+
+      "title": "PHASE 02",
+      "subTitle": "K-SHIELD: 언어의 장벽",
+      "badge": "Korean_Exclusive",
+
+      "narrative": [
+        "길고 랜덤한 암호가 유리하다는 건 알겠는데, 기억하기가 쉽지 않습니다.",
+        "한국어를 사용하는 사람에게는 흥미로운 선택지가 있습니다. 한국어 단어를 생각하면서 영문 키보드 배열 그대로 입력하면, 외국어 화자 입장에서는 의미를 파악하기 어려운 문자열이 만들어집니다.",
+        "'도데실벤젠설폰산'을 영문 입력 상태에서 치면 22자 수준의 문자열이 됩니다. 본인은 알고 있는 단어로 기억하면서, 변환된 문자열은 외부에서 패턴을 파악하기 어렵다는 점이 이 방식의 특징입니다."
+      ],
+
+      "howItWorks": [
+        {
+          "step": 1,
+          "title": "한글 단어 선택",
+          "desc": "기억하기 쉬운 한국어 단어를 하나 이상 선택하거나 직접 입력합니다. 일반적으로 낯선 단어나 긴 단어일수록 변환 결과의 길이가 늘어납니다.",
+          "tip": "외래어 표기나 전문 용어는 외국어 사전 기반 공격에 노출될 가능성이 낮아질 수 있습니다."
+        },
+        {
+          "step": 2,
+          "title": "두벌식 자모 분해",
+          "desc": "한글 한 글자는 초성·중성·종성 최대 3개의 자모로 분해됩니다. 각 자모가 두벌식 키보드의 영문 키에 대응됩니다.",
+          "tip": "한글 1글자가 영문 2~4자로 변환되기 때문에 결과 문자열의 길이가 자동으로 늘어납니다."
+        },
+        {
+          "step": 3,
+          "title": "영문 변환",
+          "desc": "각 자모를 표준 두벌식 배열의 영문 키로 변환합니다. 된소리(ㄲ·ㄸ·ㅃ·ㅆ·ㅉ)는 대문자(R·E·Q·T·W)로 변환되어 대소문자 혼합이 자연스럽게 이루어집니다.",
+          "tip": "대문자가 포함되면 문자 집합 크기가 커져 엔트로피 추정값이 높아집니다."
+        },
+        {
+          "step": 4,
+          "title": "특수문자 삽입",
+          "desc": "단어 내부와 경계에 특수문자를 삽입합니다. 삽입 위치는 첫 단어의 유니코드 값을 시드로 하여 결정론적으로 계산되므로, 같은 단어 조합이면 항상 동일한 결과가 나옵니다.",
+          "tip": "앞뒤에 고정 배치하는 방식과 달리, 내부와 경계에 분산 삽입하면 패턴 예측이 어려워집니다."
+        }
+      ],
+
+      "exampleConversion": {
+        "korean": "나트륨",
+        "roman": "skxmfba",
+        "length": 7,
+        "annotated": [
+          { "char": "나", "jamos": ["ㄴ", "ㅏ"],       "mapped": "sk",  "note": "초성 ㄴ→s, 중성 ㅏ→k" },
+          { "char": "트", "jamos": ["ㅌ", "ㅡ"],       "mapped": "xm",  "note": "초성 ㅌ→x, 중성 ㅡ→m" },
+          { "char": "륨", "jamos": ["ㄹ", "ㅠ", "ㅁ"], "mapped": "fba", "note": "초성 ㄹ→f, 중성 ㅠ→b, 종성 ㅁ→a" }
+        ]
+      },
+
+      "strengthByWordCount": [
+        { "words": 1, "exampleBits": "46~70",  "grade": "C~B", "verdict": "안전장치 자동 보강" },
+        { "words": 2, "exampleBits": "80~140", "grade": "A~S", "verdict": "권장 구성" },
+        { "words": 3, "exampleBits": "128~200","grade": "S",   "verdict": "현재 기술로 현실적 한계" }
+      ],
+
+      "guardNote": {
+        "title": "자동 안전장치",
+        "desc": "입력한 단어가 80bits(A등급) 미만으로 추정될 경우, 기준을 충족할 때까지 랜덤 단어를 자동으로 추가합니다. 추가된 단어는 결과 화면에 표시됩니다.",
+        "threshold": 80,
+        "thresholdLabel": "A등급 기준"
+      },
+
+      "securityNote": "이 생성기는 특수문자 삽입 위치를 결정론적 시드 기반으로 계산합니다. 동일한 단어를 입력하면 항상 같은 결과가 나오므로, 기억한 단어 조합으로 언제든 재현할 수 있습니다.",
+
+      "hackerQuote": {
+        "text": "eheptlfqpswpstjfvhstks... 알려진 언어의 패턴이나 사전에서 찾을 수 없는 문자열입니다. 이런 경우 일반적인 사전 기반 공격은 효과가 없고, 전수 탐색으로 접근해야 하는데 길이 때문에 현실적인 어려움이 따릅니다.",
+        "source": "— K-Shield 시뮬레이션 분석 시나리오"
+      },
+
+      "visualTrigger": "k_generator_interface"
+    },
+
+    {
+      "id": "phase_03_epilogue",
+      "type": "EPILOGUE",
+      "phase": 3,
+      "estimatedReadMin": 2,
+
+      "title": "ACADEMY COMPLETE",
+      "subTitle": "추측의 종말",
+
+      "closingNarrative": [
+        "여기까지 오셨다면, 해시 알고리즘의 동작 방식, 공격 기법의 유형, 솔트와 페퍼의 역할, 그리고 엔트로피가 왜 중요한지까지 두루 살펴보셨습니다.",
+        "보안에는 단 하나의 정답이 없습니다. 위협 환경은 계속 변하고, 오늘의 강력한 방어도 내일은 새로운 도전에 직면할 수 있습니다.",
+        "다만 몇 가지 원칙은 꾸준히 지지받고 있습니다. 충분한 길이, 예측 불가능한 구성, 그리고 관리 가능한 보안 습관. 이 방향으로 나아가는 것이 현재로서는 합리적인 선택으로 여겨집니다."
+      ],
+
+      "keyTakeaways": [
+        {
+          "icon": "📏",
+          "title": "길이는 복잡성보다 큰 영향을 줍니다",
+          "desc": "엔트로피 계산상 자릿수의 영향이 문자 종류보다 크게 작용합니다. 80bits 이상을 목표로 하는 것이 일반적으로 권장됩니다.",
+          "action": "가능하면 20자 이상 구성하기"
+        },
+        {
+          "icon": "🎲",
+          "title": "예측 가능성이 낮을수록 유리합니다",
+          "desc": "이름, 생일, 좋아하는 것 등 개인 정보와 연관된 패턴은 공격자가 우선적으로 시도하는 경우가 많습니다. 연관성 없는 조합이 더 안전한 경향이 있습니다.",
+          "action": "K-Shield로 생성한 암호 사용해보기"
+        },
+        {
+          "icon": "🔐",
+          "title": "관리 가능한 보안 습관이 중요합니다",
+          "desc": "강력한 암호도 재사용하면 한 곳의 유출이 다른 곳으로 이어질 수 있습니다. 암호 관리자와 2단계 인증을 병행하는 방식이 널리 권장됩니다.",
+          "action": "암호 관리자 도입 검토하기"
+        }
+      ],
+
+      "finalQuote": {
+        "text": "보안은 완벽한 솔루션을 찾는 과정이 아닐 수 있습니다. 공격에 드는 비용이 그 가치보다 높아지도록 설계하는 것, 그것이 현실적인 접근일 수 있습니다.",
+        "source": "— Bruce Schneier의 관점을 참고하여"
+      },
+
+      "checklist": [
+        { "label": "주요 계정에 충분한 길이의 고유한 암호 사용",          "priority": "HIGH" },
+        { "label": "암호 관리자(1Password, Bitwarden 등) 도입 검토",      "priority": "HIGH" },
+        { "label": "주요 계정에 2단계 인증(2FA) 설정",                    "priority": "HIGH" },
+        { "label": "같은 암호를 여러 곳에서 재사용하지 않기",              "priority": "MEDIUM" },
+        { "label": "K-Shield 방식으로 생성한 암호 하나 체험해보기",        "priority": "MEDIUM" }
+      ],
+
+      "stats": [
+        { "value": "80+",  "unit": "bits", "label": "일반적으로 권장하는 최소 엔트로피" },
+        { "value": "10¹⁷", "unit": "H/s",  "label": "현재 알려진 최고 수준 해독 속도" },
+        { "value": "∞",    "unit": "",     "label": "128bits 암호의 이론적 크랙 시간" }
+      ],
+
+      "visualTrigger": "academy_graduation_badge"
+    }
+  ]
+}

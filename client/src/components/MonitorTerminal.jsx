@@ -8,6 +8,7 @@
  */
 
 import React, { useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { Terminal } from 'lucide-react';
 
 const MonitorTerminal = ({ logs, res, isShielded, scrollRef }) => {
@@ -50,17 +51,23 @@ const MonitorTerminal = ({ logs, res, isShielded, scrollRef }) => {
 
         {/* 개별 로그 아이템 */}
         {logs.map((log, i) => (
-          <div key={i} className={`flex gap-3 border-l-2 ${log.startsWith('A:') ? 'border-brand-danger/30' : 'border-brand-primary/30'} pl-4 animate-in fade-in slide-in-from-left-2 duration-300`}>
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.25, delay: i * 0.03 }}
+            className={`flex gap-3 border-l-2 ${log.startsWith('A:') ? 'border-brand-danger/30' : 'border-brand-primary/30'} pl-4`}
+          >
             <span className={`${log.startsWith('A:') ? 'text-brand-danger/50' : 'text-brand-primary/50'} shrink-0 font-black`}>❯</span>
             <span className="leading-relaxed">{log.replace(/^[SA]:\s*/, '')}</span>
-          </div>
+          </motion.div>
         ))}
 
         {/* 3. 최종 해시 결과 박스 (강렬한 시각적 효과) */}
         {res && (
           <div className="mt-8 relative group/hash">
             <div className="absolute -inset-1 bg-brand-primary/20 rounded-2xl blur opacity-30 group-hover/hash:opacity-50 transition-opacity duration-500" />
-            <div className="relative p-6 bg-brand-primary/15 border-2 border-brand-primary/40 rounded-2xl text-text-bright break-all shadow-inner font-black text-sm tracking-tight leading-relaxed">
+            <div className="relative p-6 bg-brand-primary/15 border-2 border-brand-primary/40 rounded-2xl break-all shadow-inner font-black text-sm tracking-tight leading-relaxed" style={{ color: '#dce8f0' }}>
               <div className="text-[10px] uppercase text-text-dim mb-2 font-mono tracking-widest flex items-center gap-2">
                 <div className="w-1 h-1 bg-brand-primary rounded-full animate-pulse" /> Final Hash Output
               </div>

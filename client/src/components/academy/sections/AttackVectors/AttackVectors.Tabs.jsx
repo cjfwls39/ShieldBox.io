@@ -12,7 +12,7 @@ export default function AttackVectorsTabs({ attacks, selectedId, onSelect, viewM
     `relative px-4 py-2.5 rounded-xl border-2 transition-all flex-1 min-w-[120px] group flex items-center justify-center gap-2 ${
       isActive
         ? 'bg-brand-danger border-brand-danger shadow-md scale-[1.02] z-10'
-        : 'bg-bg-input border-border-subtle hover:border-brand-danger/40'
+        : 'bg-bg-input border-border-subtle hover:border-brand-danger/40 transition-colors'
     }`;
 
   const labelCls = (isActive) =>

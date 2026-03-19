@@ -121,7 +121,7 @@ export default function ScenarioSimulationStep({ scene }) {
                     ? i === 0
                       ? 'bg-brand-danger text-white shadow-lg shadow-brand-danger/20'
                       : 'bg-brand-primary text-white shadow-lg shadow-brand-primary/20'
-                    : 'text-text-dim hover:text-text-bright'
+                    : 'text-text-dim hover:text-text-bright transition-colors'
                 }`}
               >
                 {step.label}

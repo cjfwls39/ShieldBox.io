@@ -10,8 +10,47 @@
  * [7] VaultSealingVis: ATTACKER box 구조 분리 / DB 텍스트 y 조정
  */
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+
+/* 테마 감지 훅 — data-theme 속성 변경 감지 */
+function useIsDark() {
+  const [isDark, setIsDark] = useState(
+    () => document.documentElement.getAttribute('data-theme') === 'dark'
+  );
+  useEffect(() => {
+    const obs = new MutationObserver(() =>
+      setIsDark(document.documentElement.getAttribute('data-theme') === 'dark')
+    );
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => obs.disconnect();
+  }, []);
+  return isDark;
+}
+
+/* 테마별 색상 팔레트
+   중립 텍스트: CSS 변수 직접 참조 (fill="var(--text-base)" 등)
+   브랜드 색상: isDark 분기 */
+const THEME = {
+  light: {
+    textBase:    '#3d3325',  // var(--text-base) 라이트
+    textDim:     '#4a3f2f',  // var(--text-dim) 라이트
+    textBright:  '#1c1610',  // var(--text-bright) 라이트
+    red:         '#b91c1c',  // 진한 빨강
+    blue:        '#1d4ed8',  // 진한 파랑
+    green:       '#047857',  // 진한 그린
+    amber:       '#92400e',  // 진한 황갈색
+  },
+  dark: {
+    textBase:    '#a8bcd0',  // var(--text-base) 다크
+    textDim:     '#8fa3bd',  // var(--text-dim) 다크
+    textBright:  '#dce8f0',  // var(--text-bright) 다크
+    red:         '#f87171',  // 밝은 빨강
+    blue:        '#4f8ef7',  // 밝은 파랑
+    green:       '#10b981',  // 밝은 에메랄드
+    amber:       '#fbbf24',  // 밝은 노랑
+  },
+};
 
 /* CSS @keyframes */
 const CSS = `
@@ -65,7 +104,7 @@ const FlowArrow = ({ x1, y1, x2, y2, color = "#6366f1", dur = "1.2s", opacity = 
  * 내부 콘텐츠를 직접 배치할 때는 label/sub 쓰지 않고 children처럼 별도 배치.
  */
 const Box = ({ x, y, w, h, rx=8, fill, stroke, fillOp=0.08, strokeOp=0.35,
-               label, labelColor, sub, subColor="#94a3b8" }) => (
+               label, labelColor, sub, subColor = '#8fa3bd' }) => (
   <g>
     <rect x={x} y={y} width={w} height={h} rx={rx}
       fill={fill} fillOpacity={fillOp} stroke={stroke} strokeOpacity={strokeOp} strokeWidth="1.5" />
@@ -86,6 +125,8 @@ const Box = ({ x, y, w, h, rx=8, fill, stroke, fillOp=0.08, strokeOp=0.35,
    수정: transformOrigin y 150px → 130px
 ═══════════════════════════════════════════════════════ */
 const IntroVis = () => {
+  const isDark = useIsDark();
+  const t = THEME[isDark ? 'dark' : 'light'];
   const cx = 200, cy = 120; /* 시각적 중앙 위로 조정 */
   const layers = [
     { rx:170, ry:105, color:"#6366f1", op:0.18, dur:"32s", dir:"spin-cw",  dash:"10 6", label:"Algorithm", lx:374, ly:46 },
@@ -106,7 +147,7 @@ const IntroVis = () => {
 
       {/* 중앙 Shield 박스 */}
       <rect x={cx-26} y={cy-26} width={52} height={52} rx={13}
-        fill="#6366f1" fillOpacity="0.12" stroke="#6366f1" strokeOpacity="0.5" strokeWidth="1.5" />
+        fill={t.blue} fillOpacity="0.12" stroke="#6366f1" strokeOpacity="0.5" strokeWidth="1.5" />
       <Emoji x={cx} y={cy} size={32}>🛡️</Emoji>
 
       {/* 레이어 레이블 */}
@@ -119,7 +160,7 @@ const IntroVis = () => {
       ))}
 
       <text x={cx} y={246} textAnchor="middle" fontSize="8.5"
-        fill="#6366f1" fontFamily="monospace" fontWeight="900" fillOpacity="0.35"
+        fill={t.blue} fontFamily="monospace" fontWeight="900" fillOpacity="0.35"
         letterSpacing="0.15em">DEFENSE IN DEPTH</text>
     </SvgCanvas>
   );
@@ -130,6 +171,8 @@ const IntroVis = () => {
    수정: mixCy 116 → 120 (polygon 실제 중앙)
 ═══════════════════════════════════════════════════════ */
 const ConceptSaltVis = () => {
+  const isDark = useIsDark();
+  const t = THEME[isDark ? 'dark' : 'light'];
   const mixCy = 120; /* [수정2] polygon (96+144)/2 = 120 */
   const users = [
     { user:"Alice", hash:"a4f3e2...9c8d", hy: 46 },
@@ -139,18 +182,18 @@ const ConceptSaltVis = () => {
   return (
     <SvgCanvas viewBox="0 0 400 260">
       {/* 입력 박스 */}
-      <Box x={14} y={100} w={96} h={40} fill="#6366f1" stroke="#6366f1"
-        label="PASSWORD" sub='"iloveyou"' labelColor="#a5b4fc" subColor="#e2e8f0" />
+      <Box x={14} y={100} w={96} h={40} fill={t.blue} stroke="#6366f1"
+        label="PASSWORD" sub='"iloveyou"' labelColor={t.blue} subColor={t.textDim} />
 
       {/* PASSWORD → Salt 믹서 */}
       <FlowArrow x1={110} y1={120} x2={154} y2={120} color="#6366f1" dur="1s" />
 
       {/* Salt 믹서 육각형: 중앙 (180, 120) */}
       <polygon points="180,96 204,108 204,132 180,144 156,132 156,108"
-        fill="#047857" fillOpacity="0.1" stroke="#10b981" strokeOpacity="0.5" strokeWidth="1.5" />
+        fill={t.green} fillOpacity="0.1" stroke="#10b981" strokeOpacity="0.5" strokeWidth="1.5" />
       <Emoji x={180} y={120} size={26}>🧂</Emoji>
       <text x={180} y={158} textAnchor="middle" fontSize="7.5"
-        fill="#047857" fontFamily="monospace" fontWeight="900" fillOpacity="0.8">+ SALT</text>
+        fill={t.green} fontFamily="monospace" fontWeight="900" fillOpacity="0.8">+ SALT</text>
 
       {/* 믹서 우측(x=204) → 각 해시 박스 */}
       {users.map((item, i) => (
@@ -160,17 +203,17 @@ const ConceptSaltVis = () => {
             color="#6366f1" dur={`${1.3 + i*0.15}s`} opacity={0.3} />
           {/* 해시 박스: h=28 */}
           <rect x={228} y={item.hy} width={158} height={28} rx={6}
-            fill="#6366f1" fillOpacity="0.08" stroke="#6366f1" strokeOpacity="0.25" strokeWidth="1" />
-          <text x={236} y={item.hy + 11} fontSize="7" fill="#3d3325" fontFamily="monospace">
+            fill={t.blue} fillOpacity="0.08" stroke="#6366f1" strokeOpacity="0.25" strokeWidth="1" />
+          <text x={236} y={item.hy + 11} fontSize="7" fill="var(--text-base)" fontFamily="monospace">
             {item.user}
           </text>
-          <text x={236} y={item.hy + 22} fontSize="7.5" fill="#1d4ed8"
+          <text x={236} y={item.hy + 22} fontSize="7.5" fill={t.blue}
             fontFamily="monospace" fontWeight="700">{item.hash}</text>
         </motion.g>
       ))}
 
       <text x={307} y={248} textAnchor="middle" fontSize="8"
-        fill="#047857" fontFamily="monospace" fontWeight="900" fillOpacity="0.7">
+        fill={t.green} fontFamily="monospace" fontWeight="900" fillOpacity="0.7">
         UNIQUE PER USER
       </text>
     </SvgCanvas>
@@ -181,29 +224,32 @@ const ConceptSaltVis = () => {
    3. ConceptPepperVis
    변경 없음 (검수 통과)
 ═══════════════════════════════════════════════════════ */
-const ConceptPepperVis = () => (
+const ConceptPepperVis = () => {
+  const isDark = useIsDark();
+  const t = THEME[isDark ? 'dark' : 'light'];
+  return (
   <SvgCanvas viewBox="0 0 400 260">
     {/* DB 박스 */}
-    <Box x={14} y={44} w={164} h={166} rx={12} fill="#ef4444" stroke="#ef4444"
-      fillOp={0.05} strokeOp={0.25} label="DATABASE" labelColor="#f87171" sub="(공개 저장)" />
+    <Box x={14} y={44} w={164} h={166} rx={12} fill={t.red} stroke="#ef4444"
+      fillOp={0.05} strokeOp={0.25} label="DATABASE" labelColor={t.red} sub="(공개 저장)" subColor={t.textDim} />
 
     {/* DB 내부 행: y=80, 110, 140 / h=22 → 최하 162 < 박스하단 210 */}
     {[
-      { label:"hash",  val:"a4f3e2...9c8d", vc:"#94a3b8" },
-      { label:"salt",  val:"xK9#mP2q",      vc:"#a5b4fc" },
-      { label:"email", val:"user@site.com", vc:"#94a3b8" },
+      { label:"hash",  val:"a4f3e2...9c8d", vc:t.textDim },
+      { label:"salt",  val:"xK9#mP2q",      vc:t.blue   },
+      { label:"email", val:"user@site.com", vc:t.textDim },
     ].map((row, i) => (
       <g key={i}>
         <rect x={26} y={80 + i*30} width={140} height={22} rx={4}
-          fill="#1e293b" stroke="#334155" strokeWidth="0.8" />
-        <text x={34}  y={95 + i*30} fontSize="7" fill="#4a3f2f" fontFamily="monospace">{row.label}:</text>
+          fill={isDark ? '#1e293b' : '#ede7d8'} stroke={isDark ? '#334155' : '#c8bfaf'} strokeWidth="0.8" />
+        <text x={34}  y={95 + i*30} fontSize="7" fill="var(--text-dim)" fontFamily="monospace">{row.label}:</text>
         <text x={76}  y={95 + i*30} fontSize="7" fill={row.vc}  fontFamily="monospace" fontWeight="700">{row.val}</text>
       </g>
     ))}
 
     {/* DB 경고 */}
     <motion.text x={96} y={197} textAnchor="middle" fontSize="7.5"
-      fill="#ef4444" fontFamily="monospace" fontWeight="900"
+      fill={t.red} fontFamily="monospace" fontWeight="900"
       animate={{ opacity:[0.4,1,0.4] }} transition={{ repeat:Infinity, duration:2 }}>
       ⚠ 유출 시 솔트 노출
     </motion.text>
@@ -212,34 +258,37 @@ const ConceptPepperVis = () => (
     <line x1={200} y1={28} x2={200} y2={232}
       stroke="#475569" strokeWidth="1" strokeDasharray="4 4" strokeOpacity="0.4" />
     <text x={200} y={20} textAnchor="middle" fontSize="7"
-      fill="#475569" fontFamily="monospace" fillOpacity="0.6">ISOLATION</text>
+      fill={t.textDim} fontFamily="monospace" fillOpacity="0.6">ISOLATION</text>
 
     {/* Server ENV 박스: x=210 w=176 → 우측 386 */}
-    <Box x={210} y={44} w={176} h={166} rx={12} fill="#f59e0b" stroke="#f59e0b"
-      fillOp={0.05} strokeOp={0.3} label="SERVER ENV" labelColor="#fbbf24" sub="(비공개 보관)" />
+    <Box x={210} y={44} w={176} h={166} rx={12} fill={t.amber} stroke="#f59e0b"
+      fillOp={0.05} strokeOp={0.3} label="SERVER ENV" labelColor={t.amber} sub="(비공개 보관)" subColor={t.textDim} />
 
     {/* Pepper 값 박스: x=224 w=148 → 우측 372 < 386 */}
     <rect x={224} y={110} width={148} height={44} rx={8}
-      fill="#92400e" fillOpacity="0.2" stroke="#f59e0b" strokeOpacity="0.5" strokeWidth="1.5" />
+      fill={t.amber} fillOpacity="0.2" stroke="#f59e0b" strokeOpacity="0.5" strokeWidth="1.5" />
     <text x={298} y={128} textAnchor="middle" fontSize="7.5"
-      fill="#92400e" fontFamily="monospace" fontWeight="700">PEPPER</text>
+      fill={t.amber} fontFamily="monospace" fontWeight="700">PEPPER</text>
     <text x={298} y={142} textAnchor="middle" fontSize="8.5"
-      fill="#92400e" fontFamily="monospace" fontWeight="900">"K#9v!P2z..."</text>
+      fill={t.amber} fontFamily="monospace" fontWeight="900">"K#9v!P2z..."</text>
 
     <Emoji x={298} y={178} size={28}>🔐</Emoji>
 
     <text x={298} y={205} textAnchor="middle" fontSize="7.5"
-      fill="#047857" fontFamily="monospace" fontWeight="900" fillOpacity="0.8">
+      fill={t.green} fontFamily="monospace" fontWeight="900" fillOpacity="0.8">
       DB 탈취해도 무용지물
     </text>
   </SvgCanvas>
-);
+  );
+};
 
 /* ═══════════════════════════════════════════════════════
    4. LinkedInBreachVis
    수정: 이모지 size 12 → 14
 ═══════════════════════════════════════════════════════ */
 const LinkedInBreachVis = () => {
+  const isDark = useIsDark();
+  const t = THEME[isDark ? 'dark' : 'light'];
   const events = [
     { t:"Jun 5, 2012",  label:"DB 침해 발생",       sub:"SQL Injection 추정",    color:"#ef4444", em:"💀" },
     { t:"Jun 6, 2012",  label:"6.5M 해시 포럼 공개", sub:"InsidePro 러시아 포럼", color:"#f97316", em:"📢" },
@@ -276,10 +325,10 @@ const LinkedInBreachVis = () => {
             <text x={82} y={cy}     fontSize="7.5" fill={ev.color}
               fontFamily="monospace" fontWeight="900" fillOpacity="0.7">{ev.t}</text>
             {/* 이벤트명 */}
-            <text x={82} y={cy + 12} fontSize="9" fill="#1c1610"
+            <text x={82} y={cy + 12} fontSize="9" fill="var(--text-bright)"
               fontFamily="monospace" fontWeight="900">{ev.label}</text>
             {/* 서브 */}
-            <text x={82} y={cy + 23} fontSize="7" fill="#4a3f2f"
+            <text x={82} y={cy + 23} fontSize="7" fill="var(--text-dim)"
               fontFamily="monospace">{ev.sub}</text>
           </motion.g>
         );
@@ -287,9 +336,9 @@ const LinkedInBreachVis = () => {
 
       {/* 하단 요약 */}
       <rect x={14} y={248} width={372} height={11} rx={3}
-        fill="#ef4444" fillOpacity="0.07" />
+        fill={t.red} fillOpacity="0.07" />
       <text x={200} y={257} textAnchor="middle" fontSize="7.5"
-        fill="#b91c1c" fontFamily="monospace" fontWeight="900" fillOpacity="0.75">
+        fill={t.red} fontFamily="monospace" fontWeight="900" fillOpacity="0.75">
         SHA-1 · NO SALT · GPU 10억 H/s → 72HR CRACK
       </text>
     </SvgCanvas>
@@ -301,6 +350,8 @@ const LinkedInBreachVis = () => {
    수정: SVG text 안 이모지(⚡, ✓) 제거 → 텍스트만
 ═══════════════════════════════════════════════════════ */
 const CompareHashingVis = () => {
+  const isDark = useIsDark();
+  const t = THEME[isDark ? 'dark' : 'light'];
   const users = ["Alice", "Bob", "Carol"];
   const salted = ["a4f3e2...7e6f", "3b2a1f...6b7a", "8e9f0a...4e5f"];
 
@@ -308,33 +359,33 @@ const CompareHashingVis = () => {
     <SvgCanvas viewBox="0 0 400 260">
       {/* 헤더 */}
       <text x={98} y={18} textAnchor="middle" fontSize="8.5"
-        fill="#ef4444" fontFamily="monospace" fontWeight="900">WITHOUT SALT</text>
+        fill={t.red} fontFamily="monospace" fontWeight="900">WITHOUT SALT</text>
       <text x={300} y={18} textAnchor="middle" fontSize="8.5"
-        fill="#6366f1" fontFamily="monospace" fontWeight="900">WITH SALT</text>
+        fill={t.blue} fontFamily="monospace" fontWeight="900">WITH SALT</text>
 
       {/* 구분선 */}
       <line x1={200} y1={24} x2={200} y2={210}
-        stroke="#334155" strokeWidth="1" strokeDasharray="3 3" strokeOpacity="0.5" />
+        stroke={isDark ? '#334155' : '#c8bfaf'} strokeWidth="1" strokeDasharray="3 3" strokeOpacity="0.5" />
 
       {users.map((u, i) => {
         const ry = 36 + i * 56;
         return (
           <g key={u}>
             {/* 왼쪽: x=16 w=166 → 우측 182 */}
-            <text x={16} y={ry + 12} fontSize="7.5" fill="#4a3f2f" fontFamily="monospace">{u}</text>
+            <text x={16} y={ry + 12} fontSize="7.5" fill="var(--text-dim)" fontFamily="monospace">{u}</text>
             <rect x={16} y={ry + 16} width={166} height={22} rx={5}
-              fill="#ef4444" fillOpacity="0.07" stroke="#ef4444" strokeOpacity="0.22" strokeWidth="1" />
+              fill={t.red} fillOpacity="0.07" stroke="#ef4444" strokeOpacity="0.22" strokeWidth="1" />
             <text x={99} y={ry + 31} textAnchor="middle" fontSize="7.5"
-              fill="#b91c1c" fontFamily="monospace" fontWeight="700">e10adc...883e</text>
+              fill={t.red} fontFamily="monospace" fontWeight="700">e10adc...883e</text>
 
             {/* 오른쪽: x=210 w=176 → 우측 386 */}
             <motion.g initial={{ opacity:0, x:6 }} animate={{ opacity:1, x:0 }}
               transition={{ delay: i*0.15 + 0.2, duration:0.45 }}>
-              <text x={210} y={ry + 12} fontSize="7.5" fill="#4a3f2f" fontFamily="monospace">{u}</text>
+              <text x={210} y={ry + 12} fontSize="7.5" fill="var(--text-dim)" fontFamily="monospace">{u}</text>
               <rect x={210} y={ry + 16} width={176} height={22} rx={5}
-                fill="#6366f1" fillOpacity="0.08" stroke="#6366f1" strokeOpacity="0.28" strokeWidth="1" />
+                fill={t.blue} fillOpacity="0.08" stroke="#6366f1" strokeOpacity="0.28" strokeWidth="1" />
               <text x={298} y={ry + 31} textAnchor="middle" fontSize="7.5"
-                fill="#1d4ed8" fontFamily="monospace" fontWeight="700">{salted[i]}</text>
+                fill={t.blue} fontFamily="monospace" fontWeight="700">{salted[i]}</text>
             </motion.g>
           </g>
         );
@@ -342,12 +393,12 @@ const CompareHashingVis = () => {
 
       {/* [수정5] 이모지 제거, 텍스트만 */}
       <motion.text x={98} y={222} textAnchor="middle" fontSize="8"
-        fill="#ef4444" fontFamily="monospace" fontWeight="900"
+        fill={t.red} fontFamily="monospace" fontWeight="900"
         animate={{ opacity:[0.4,1,0.4] }} transition={{ repeat:Infinity, duration:2 }}>
         SAME = COLLECTIVE VULN
       </motion.text>
       <text x={298} y={222} textAnchor="middle" fontSize="8"
-        fill="#047857" fontFamily="monospace" fontWeight="900">
+        fill={t.green} fontFamily="monospace" fontWeight="900">
         ALL UNIQUE = SAFE
       </text>
     </SvgCanvas>
@@ -360,18 +411,21 @@ const CompareHashingVis = () => {
    → NO SALT y=20~100, WITH SALT y=140~220 — 같은 x 대역에 수직으로 정렬
    → ATTACKER는 y=60~180 중앙에 배치해 양쪽 경로와 자연스럽게 연결
 ═══════════════════════════════════════════════════════ */
-const RainbowTableVis = () => (
+const RainbowTableVis = () => {
+  const isDark = useIsDark();
+  const t = THEME[isDark ? 'dark' : 'light'];
+  return (
   <SvgCanvas viewBox="0 0 400 260">
     {/* ── ATTACKER (좌측 중앙) ── */}
-    <Box x={8} y={72} w={76} h={90} fill="#ef4444" stroke="#ef4444"
+    <Box x={8} y={72} w={76} h={90} fill={t.red} stroke="#ef4444"
       fillOp={0.08} strokeOp={0.3} />
     <Emoji x={46} y={96} size={26}>👾</Emoji>
     <text x={46} y={117} textAnchor="middle" fontSize="7.5"
-      fill="#b91c1c" fontFamily="monospace" fontWeight="900">ATTACKER</text>
+      fill={t.red} fontFamily="monospace" fontWeight="900">ATTACKER</text>
     <text x={46} y={129} textAnchor="middle" fontSize="7"
-      fill="#3d3325" fontFamily="monospace">Rainbow</text>
+      fill="var(--text-base)" fontFamily="monospace">Rainbow</text>
     <text x={46} y={140} textAnchor="middle" fontSize="7"
-      fill="#3d3325" fontFamily="monospace">Table</text>
+      fill="var(--text-base)" fontFamily="monospace">Table</text>
 
     {/* ── 위쪽 화살표: ATTACKER → NO SALT DB ── */}
     <FlowArrow x1={84} y1={92} x2={138} y2={60} color="#ef4444" dur="0.9s" opacity={0.65} />
@@ -379,18 +433,18 @@ const RainbowTableVis = () => (
     {/* ── NO SALT (우측 상단) ── */}
     {/* NO SALT 박스: x=138 w=250 — WITH SALT 박스와 동일 너비(138+250=388) */}
     <text x={263} y={26} textAnchor="middle" fontSize="8"
-      fill="#ef4444" fontFamily="monospace" fontWeight="900">NO SALT</text>
-    <Box x={138} y={32} w={250} h={68} fill="#ef4444" stroke="#ef4444"
+      fill={t.red} fontFamily="monospace" fontWeight="900">NO SALT</text>
+    <Box x={138} y={32} w={250} h={68} fill={t.red} stroke="#ef4444"
       fillOp={0.06} strokeOp={0.28} />
     {["Alice","Bob","Carol"].map((u, i) => (
       <g key={u}>
-        <text x={150} y={50 + i*16} fontSize="7" fill="#4a3f2f" fontFamily="monospace">{u}:</text>
-        <text x={178} y={50 + i*16} fontSize="7" fill="#b91c1c" fontFamily="monospace" fontWeight="700">e10adc...883e</text>
+        <text x={150} y={50 + i*16} fontSize="7" fill="var(--text-dim)" fontFamily="monospace">{u}:</text>
+        <text x={178} y={50 + i*16} fontSize="7" fill={t.red} fontFamily="monospace" fontWeight="700">e10adc...883e</text>
       </g>
     ))}
     {/* 즉시 크랙 레이블: 박스 하단(100) 바로 아래 */}
     <motion.text x={263} y={116} textAnchor="middle" fontSize="8"
-      fill="#ef4444" fontFamily="monospace" fontWeight="900"
+      fill={t.red} fontFamily="monospace" fontWeight="900"
       animate={{ opacity:[0,1,0] }} transition={{ repeat:Infinity, duration:1.4 }}>
       CRACKED INSTANTLY
     </motion.text>
@@ -404,11 +458,11 @@ const RainbowTableVis = () => (
 
     {/* ── WITH SALT (우측 하단) ── */}
     <text x={263} y={148} textAnchor="middle" fontSize="8"
-      fill="#6366f1" fontFamily="monospace" fontWeight="900">WITH SALT</text>
+      fill={t.blue} fontFamily="monospace" fontWeight="900">WITH SALT</text>
 
     {/* WALL: x=138 w=14 → 우측 152 */}
     <motion.rect x={138} y={158} width={14} height={62} rx={4}
-      fill="#6366f1" fillOpacity="0.15" stroke="#6366f1" strokeOpacity="0.45" strokeWidth="1.5"
+      fill={t.blue} fillOpacity="0.15" stroke="#6366f1" strokeOpacity="0.45" strokeWidth="1.5"
       animate={{ opacity:[0.45,1,0.45] }} transition={{ repeat:Infinity, duration:2 }} />
 
     {/* 방패 이모지: WALL 우측(152)과 DB 좌측(172) 사이 중앙 x=162, 박스 수직 중앙 y=189 */}
@@ -416,7 +470,7 @@ const RainbowTableVis = () => (
 
     {/* With Salt DB 박스: x=172 w=216 → 우측 388, 하단 220
         WALL(x=138 w=14 → 우측152) + 갭 20px → DB x=172 */}
-    <Box x={172} y={158} w={216} h={62} fill="#6366f1" stroke="#6366f1"
+    <Box x={172} y={158} w={216} h={62} fill={t.blue} stroke="#6366f1"
       fillOp={0.06} strokeOp={0.28} />
     {[
       { u:"Alice", h:"a4f3...7e6f" },
@@ -424,16 +478,17 @@ const RainbowTableVis = () => (
       { u:"Carol", h:"8e9f...4e5f" },
     ].map((item, i) => (
       <g key={item.u}>
-        <text x={184} y={176 + i*16} fontSize="7" fill="#4a3f2f" fontFamily="monospace">{item.u}:</text>
-        <text x={212} y={176 + i*16} fontSize="7" fill="#1d4ed8" fontFamily="monospace" fontWeight="700">{item.h}</text>
+        <text x={184} y={176 + i*16} fontSize="7" fill="var(--text-dim)" fontFamily="monospace">{item.u}:</text>
+        <text x={212} y={176 + i*16} fontSize="7" fill={t.blue} fontFamily="monospace" fontWeight="700">{item.h}</text>
       </g>
     ))}
 
     {/* 하단 결과 레이블: NO SALT 박스 중앙 x=263과 맞춤 */}
     <text x={263} y={238} textAnchor="middle" fontSize="7.5"
-      fill="#047857" fontFamily="monospace" fontWeight="900">RAINBOW TABLE NULLIFIED</text>
+      fill={t.green} fontFamily="monospace" fontWeight="900">RAINBOW TABLE NULLIFIED</text>
   </SvgCanvas>
 );
+};
 
 /* ═══════════════════════════════════════════════════════
    7. VaultSealingVis
@@ -441,18 +496,21 @@ const RainbowTableVis = () => (
    - ATTACKER box: label/sub 제거, 별도 텍스트로 y 분리
    - DB box: h 80 → 90, 내부 텍스트 y 조정
 ═══════════════════════════════════════════════════════ */
-const VaultSealingVis = () => (
+const VaultSealingVis = () => {
+  const isDark = useIsDark();
+  const t = THEME[isDark ? 'dark' : 'light'];
+  return (
   <SvgCanvas viewBox="0 0 400 260">
     {/* 공격자: 순수 박스 + 별도 배치 */}
-    <Box x={6} y={82} w={68} h={84} fill="#ef4444" stroke="#ef4444"
+    <Box x={6} y={82} w={68} h={84} fill={t.red} stroke="#ef4444"
       fillOp={0.08} strokeOp={0.3} />
     <Emoji x={40} y={104} size={24}>👾</Emoji>
     <text x={40} y={123} textAnchor="middle" fontSize="7.5"
-      fill="#b91c1c" fontFamily="monospace" fontWeight="900">ATTACKER</text>
+      fill={t.red} fontFamily="monospace" fontWeight="900">ATTACKER</text>
     <text x={40} y={134} textAnchor="middle" fontSize="7"
-      fill="#3d3325" fontFamily="monospace">DB 탈취</text>
+      fill="var(--text-base)" fontFamily="monospace">DB 탈취</text>
     <text x={40} y={144} textAnchor="middle" fontSize="7"
-      fill="#3d3325" fontFamily="monospace">완료</text>
+      fill="var(--text-base)" fontFamily="monospace">완료</text>
 
     {/* 공격자 → DB */}
     <FlowArrow x1={74} y1={124} x2={112} y2={124} color="#ef4444" dur="0.85s" opacity={0.7} />
@@ -460,15 +518,15 @@ const VaultSealingVis = () => (
     {/* [수정7] DB box: y=82 h=90 → 하단 172
        내부 텍스트: label y=82+16=98, sub y=82+27=109
        내부 행: y=122, 135, 148 → 최하 148 < 172 OK */}
-    <Box x={112} y={82} w={92} h={90} fill="#ef4444" stroke="#ef4444"
-      fillOp={0.06} strokeOp={0.35} label="DATABASE" labelColor="#f87171" sub="(탈취됨)" />
+    <Box x={112} y={82} w={92} h={90} fill={t.red} stroke="#ef4444"
+      fillOp={0.06} strokeOp={0.35} label="DATABASE" labelColor={t.red} sub="(탈취됨)" subColor={t.textDim} />
     {[
-      { label:"hash:",   val:"a4f3...9c8d", vc:"#94a3b8" },
-      { label:"salt:",   val:"xK9#mP2q",   vc:"#a5b4fc" },
-      { label:"pepper:", val:"???",         vc:"#ef4444"  },
+      { label:"hash:",   val:"a4f3...9c8d", vc:t.textDim },
+      { label:"salt:",   val:"xK9#mP2q",   vc:t.blue   },
+      { label:"pepper:", val:"???",         vc:t.red    },
     ].map((row, i) => (
       <text key={i} x={120} y={122 + i*13} fontSize="7" fontFamily="monospace">
-        <tspan fill="#4a3f2f">{row.label}</tspan>
+        <tspan fill="var(--text-dim)">{row.label}</tspan>
         <tspan fill={row.vc} fontWeight="700"> {row.val}</tspan>
       </text>
     ))}
@@ -478,7 +536,7 @@ const VaultSealingVis = () => (
 
     {/* PEPPER WALL: y=72 h=120 → 하단 192 */}
     <motion.rect x={236} y={72} width={20} height={120} rx={5}
-      fill="#f59e0b" fillOpacity="0.18" stroke="#f59e0b" strokeOpacity="0.55" strokeWidth="2"
+      fill={t.amber} fillOpacity="0.18" stroke="#f59e0b" strokeOpacity="0.55" strokeWidth="2"
       animate={{ opacity:[0.55,1,0.55] }} transition={{ repeat:Infinity, duration:2.2 }} />
     <Emoji x={246} y={132} size={20}>🔒</Emoji>
 
@@ -489,42 +547,47 @@ const VaultSealingVis = () => (
     </motion.text>
 
     {/* Server ENV: x=278 y=72 w=114 h=120 → 우측 392, 하단 192 */}
-    <Box x={278} y={72} w={114} h={120} rx={10} fill="#f59e0b" stroke="#f59e0b"
-      fillOp={0.05} strokeOp={0.35} label="SERVER ENV" labelColor="#fbbf24" sub="(분리 보관)" />
+    <Box x={278} y={72} w={114} h={120} rx={10} fill={t.amber} stroke="#f59e0b"
+      fillOp={0.05} strokeOp={0.35} label="SERVER ENV" labelColor={t.amber} sub="(분리 보관)" subColor={t.textDim} />
 
     {/* Pepper 내부 박스: x=288 y=112 w=94 h=40 → 우측 382, 하단 152 < 192 */}
     <rect x={288} y={112} width={94} height={40} rx={7}
-      fill="#92400e" fillOpacity="0.25" stroke="#f59e0b" strokeOpacity="0.5" strokeWidth="1.5" />
+      fill={t.amber} fillOpacity="0.25" stroke="#f59e0b" strokeOpacity="0.5" strokeWidth="1.5" />
     <text x={335} y={128} textAnchor="middle" fontSize="7.5"
-      fill="#92400e" fontFamily="monospace" fontWeight="700">PEPPER</text>
+      fill={t.amber} fontFamily="monospace" fontWeight="700">PEPPER</text>
     <text x={335} y={142} textAnchor="middle" fontSize="8.5"
-      fill="#92400e" fontFamily="monospace" fontWeight="900">"K#9v!P2z"</text>
+      fill={t.amber} fontFamily="monospace" fontWeight="900">"K#9v!P2z"</text>
 
     {/* 결과 배너: y=204 h=38 → 하단 242 */}
     <rect x={8} y={204} width={384} height={38} rx={7}
-      fill="#047857" fillOpacity="0.06" stroke="#10b981" strokeOpacity="0.2" strokeWidth="1" />
+      fill={t.green} fillOpacity="0.06" stroke="#10b981" strokeOpacity="0.2" strokeWidth="1" />
     <text x={200} y={220} textAnchor="middle" fontSize="8.5"
-      fill="#065f46" fontFamily="monospace" fontWeight="900">
+      fill={t.green} fontFamily="monospace" fontWeight="900">
       DB 탈취 → 페퍼 없음 → 해독 불가
     </text>
     <text x={200} y={234} textAnchor="middle" fontSize="7.5"
-      fill="#047857" fontFamily="monospace" fillOpacity="0.65">
+      fill={t.green} fontFamily="monospace" fillOpacity="0.65">
       Salt(DB) + Pepper(ENV) = 분리된 두 비밀
     </text>
   </SvgCanvas>
 );
+};
 
 /* ═══════════════════════════════════════════════════════
    Fallback
 ═══════════════════════════════════════════════════════ */
-const FallbackVis = () => (
-  <SvgCanvas viewBox="0 0 400 260">
-    <Emoji x={200} y={120} size={56}>🛡️</Emoji>
-    <text x={200} y={170} textAnchor="middle" fontSize="8.5"
-      fill="#6366f1" fontFamily="monospace" fontWeight="900"
-      fillOpacity="0.35" letterSpacing="0.15em">SECURITY VISUALIZATION</text>
-  </SvgCanvas>
-);
+const FallbackVis = () => {
+  const isDark = useIsDark();
+  const t = THEME[isDark ? 'dark' : 'light'];
+  return (
+    <SvgCanvas viewBox="0 0 400 260">
+      <Emoji x={200} y={120} size={56}>🛡️</Emoji>
+      <text x={200} y={170} textAnchor="middle" fontSize="8.5"
+        fill={t.blue} fontFamily="monospace" fontWeight="900"
+        fillOpacity="0.35" letterSpacing="0.15em">SECURITY VISUALIZATION</text>
+    </SvgCanvas>
+  );
+};
 
 /* ═══════════════════════════════════════════════════════
    메인 라우터

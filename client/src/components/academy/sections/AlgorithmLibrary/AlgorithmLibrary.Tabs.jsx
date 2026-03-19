@@ -21,7 +21,7 @@ export default function AlgorithmLibraryTabs({ algorithms, selectedId, onSelect 
               className={`relative px-5 py-2.5 rounded-xl border-2 font-black text-xs tracking-widest uppercase transition-all ${
                 isActive
                   ? `${algo.bgLight} border-current ${algo.visualTheme} shadow-md`
-                  : 'bg-bg-input border-border-subtle text-text-dim hover:border-brand-primary/40 hover:text-text-bright'
+                  : 'bg-bg-input border-border-subtle text-text-dim hover:border-brand-primary/40 hover:text-text-bright transition-colors'
               }`}
             >
               <span className="relative z-10">{algo.name}</span>

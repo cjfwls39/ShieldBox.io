@@ -16,7 +16,7 @@ export default function AlgorithmLibraryList({ algorithms, selectedId, onSelect 
               className={`w-full p-4 rounded-2xl border-2 transition-all text-left group ${
                 selectedId === algo.id
                   ? 'bg-brand-primary border-brand-primary shadow-lg scale-[1.02]'
-                  : 'bg-bg-input border-border-subtle hover:border-brand-primary/40'
+                  : 'bg-bg-input border-border-subtle hover:border-brand-primary/40 transition-colors'
               }`}
             >
               <p className={`text-sm font-black italic tracking-tight ${selectedId === algo.id ? 'text-white' : 'text-text-bright'}`}>

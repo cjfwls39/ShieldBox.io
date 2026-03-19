@@ -140,32 +140,32 @@ export const ALGO_PARAMS = {
 export const ALGORITHMS = [
   { 
     id:'argon2id', name:'Argon2id', icon:<Fingerprint size={18}/>, grade:'S', 
-    gradeColor:'text-emerald-400', gradeBg:'bg-emerald-400/10', gradeBorder:'border-emerald-400/40',
+    gradeColor:'text-emerald-400', gradeBg:'bg-emerald-400/10', gradeBorder:'border-emerald-400/40', barColor:'bg-emerald-400',
     category:'Memory-Hard', tip:'메모리 하드 함수로 GPU/ASIC 병렬 공격을 구조적으로 무력화합니다. NIST 권고 알고리즘.' 
   },
   { 
     id:'bcrypt', name:'bcrypt', icon:<Cpu size={18}/>, grade:'A', 
-    gradeColor:'text-blue-400', gradeBg:'bg-blue-400/10', gradeBorder:'border-blue-400/40',
+    gradeColor:'text-blue-400', gradeBg:'bg-blue-400/10', gradeBorder:'border-blue-400/40', barColor:'bg-blue-400',
     category:'Key-Stretch', tip:'Cost Factor를 지수적으로 조절하여 미래 하드웨어 발전에 유연하게 대응합니다.' 
   },
   { 
     id:'scrypt', name:'scrypt', icon:<HardDrive size={18}/>, grade:'A', 
-    gradeColor:'text-blue-400', gradeBg:'bg-blue-400/10', gradeBorder:'border-blue-400/40',
+    gradeColor:'text-blue-400', gradeBg:'bg-blue-400/10', gradeBorder:'border-blue-400/40', barColor:'bg-blue-400',
     category:'Memory-Hard', tip:'N·r·p 파라미터로 메모리 비용을 독립적으로 조절하여 ASIC 공격에 강합니다.' 
   },
   { 
     id:'sha512', name:'SHA-512', icon:<Database size={18}/>, grade:'C', 
-    gradeColor:'text-yellow-400', gradeBg:'bg-yellow-400/10', gradeBorder:'border-yellow-400/40',
+    gradeColor:'text-yellow-400', gradeBg:'bg-yellow-400/10', gradeBorder:'border-yellow-400/40', barColor:'bg-yellow-400',
     category:'Fast Hash', tip:'범용 해시 함수입니다. 보안을 위해 Salt 병행 및 PBKDF2 반복 적용이 필수입니다.' 
   },
   { 
     id:'sha256', name:'SHA-256', icon:<Database size={18}/>, grade:'C', 
-    gradeColor:'text-yellow-400', gradeBg:'bg-yellow-400/10', gradeBorder:'border-yellow-400/40',
+    gradeColor:'text-yellow-400', gradeBg:'bg-yellow-400/10', gradeBorder:'border-yellow-400/40', barColor:'bg-yellow-400',
     category:'Fast Hash', tip:'인터넷 표준 해시입니다. 단순 해시만으로는 현대적 공격 시나리오에 취약할 수 있습니다.' 
   },
   { 
     id:'md5', name:'MD5', icon:<History size={18}/>, grade:'F', 
-    gradeColor:'text-red-500', gradeBg:'bg-red-500/10', gradeBorder:'border-red-500/40',
+    gradeColor:'text-red-500', gradeBg:'bg-red-500/10', gradeBorder:'border-red-500/40', barColor:'bg-red-500',
     category:'Deprecated', tip:'충돌 저항성이 붕괴되었습니다. 보안 목적으로 절대 사용하지 말고 즉시 마이그레이션하십시오.' 
   }
 ];

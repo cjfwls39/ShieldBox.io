@@ -101,8 +101,8 @@ export default function ScenarioLab({ onBack }) {
                       i === currentSceneIdx
                         ? 'w-10 bg-brand-primary opacity-100'
                         : i < currentSceneIdx
-                          ? 'w-3 bg-brand-primary/50 hover:bg-brand-primary/80'
-                          : 'w-3 bg-border-subtle hover:bg-text-dim/30'
+                          ? 'w-3 bg-brand-primary/50 hover:bg-brand-primary/80 transition-colors'
+                          : 'w-3 bg-border-subtle hover:bg-text-dim/30 transition-colors'
                     }`}
                   />
                 ))}

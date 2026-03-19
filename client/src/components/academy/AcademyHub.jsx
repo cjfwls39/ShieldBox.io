@@ -2,15 +2,16 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Binary, Target, Activity, History, 
-  ArrowRight, Sparkles, Lightbulb, ShieldAlert 
+  ArrowRight, Sparkles, Lightbulb, ShieldAlert, Zap 
 } from 'lucide-react';
 
 import AlgorithmLibrary from './sections/AlgorithmLibrary/AlgorithmLibrary';
 import AttackVectors from './sections/AttackVectors/AttackVectors';
-// [추가] 시나리오 랩 섹션 임포트
 import ScenarioLab from './sections/ScenarioLab/ScenarioLab';
+// [추가] 4번째 섹션 엔트로피 허브 임포트
+import EntropyHub from './sections/EntropyHub/EntropyHub';
 
-// 1. 아카데미 메인 데이터 (원본 유지 + scenarios 추가)
+// 1. 아카데미 메인 데이터 (Entropy Hub로 최신화)
 const ACADEMY_MODULES = [
   {
     id: 'algorithms',
@@ -29,18 +30,19 @@ const ACADEMY_MODULES = [
     bgClass: 'bg-brand-danger/10'
   },
   {
-    id: 'scenarios', // [추가] 
+    id: 'scenarios',
     title: 'SCENARIO LAB',
-    desc: '과거의 실제사례를 살펴보고 솔트와 페퍼의 중요성을 느끼십시오',
+    desc: '과거의 실제사례를 살펴보고 솔트와 페퍼의 중요성을 느끼십시오.',
     icon: <History size={28} />,
     colorClass: 'text-amber-400',
     bgClass: 'bg-amber-400/10'
   },
   {
-    id: 'monitoring',
-    title: 'REAL-TIME MONITORING',
-    desc: '현재 시스템에서 발생하는 실시간 패스워드 크래킹 시도와 위협 로그를 시각화합니다.',
-    icon: <Activity size={28} />,
+    // [수정] 4번째 섹션을 기획한 엔트로피 허브로 교체
+    id: 'entropy',
+    title: 'THE ENTROPY HUB',
+    desc: '왜 길고 랜덤한 암호가 최강일까요? 수학적 원리와 나만의 고도화된 생성 전략을 체험하세요.',
+    icon: <Zap size={28} />,
     colorClass: 'text-blue-400',
     bgClass: 'bg-blue-400/10'
   }
@@ -60,7 +62,7 @@ export default function AcademyHub() {
             exit={{ opacity: 0, y: -20 }}
             className="flex-1 px-10 py-12 flex flex-col items-center max-w-7xl mx-auto w-full"
           >
-            {/* 상단 헤더 섹션 (원본 유지) */}
+            {/* 상단 헤더 섹션 */}
             <div className="text-center mb-16 space-y-5 shrink-0">
               <div className="flex items-center justify-center gap-3 text-brand-primary font-black text-[10px] tracking-[0.4em] uppercase opacity-70">
                 <ShieldAlert size={16} /> Cyber_Security_Academy
@@ -69,12 +71,12 @@ export default function AcademyHub() {
                 Knowledge is <span className="text-brand-primary">Shield</span>
               </h1>
               <p className="text-lg text-text-dim max-w-2xl mx-auto font-medium break-keep leading-relaxed">
-                비밀번호를 자주 바꾸는게 과연 어느정도로 의미가 있을까요?<br></br>
+                비밀번호를 자주 바꾸는게 과연 어느정도로 의미가 있을까요?<br/>
                 관건은 "올바르게 만드는것" 입니다, 이를 위한 지식을 이곳에서 확인하십시오
               </p>
             </div>
 
-            {/* 모듈 선택 그리드 (원본 유지) */}
+            {/* 모듈 선택 그리드 */}
             <div className="grid md:grid-cols-2 gap-8 w-full mb-12">
               {ACADEMY_MODULES.map((module) => (
                 <button
@@ -108,7 +110,7 @@ export default function AcademyHub() {
               ))}
             </div>
 
-            {/* 하단 팁 섹션 (원본 유지) */}
+            {/* 하단 팁 섹션 */}
             <div className="flex items-center gap-6 p-8 bg-bg-input rounded-3xl border border-border-subtle w-full shadow-inner">
               <div className="p-4 bg-brand-primary/10 rounded-2xl text-brand-primary shrink-0">
                 <Lightbulb size={24} />
@@ -134,13 +136,16 @@ export default function AcademyHub() {
             {activeSection === 'attacks' && (
               <AttackVectors onBack={() => setActiveSection('hub')} />
             )}
-            {/* [추가] 시나리오 랩 연결 */}
             {activeSection === 'scenarios' && (
               <ScenarioLab onBack={() => setActiveSection('hub')} />
             )}
+            {/* [추가] 엔트로피 허브 라우팅 연결 */}
+            {activeSection === 'entropy' && (
+              <EntropyHub onBack={() => setActiveSection('hub')} />
+            )}
             
-            {/* 준비 중인 섹션 처리 (scenarios 제외 대상에서 제거) */}
-            {!['algorithms', 'attacks', 'scenarios', 'hub'].includes(activeSection) && (
+            {/* 준비 중인 섹션 처리 (entropy 추가) */}
+            {!['algorithms', 'attacks', 'scenarios', 'entropy', 'hub'].includes(activeSection) && (
               <div className="h-full flex flex-col items-center justify-center space-y-8 bg-bg-main">
                 <div className="w-24 h-24 rounded-3xl bg-bg-input border border-border-subtle flex items-center justify-center text-brand-primary opacity-20">
                   <Sparkles size={48} />
