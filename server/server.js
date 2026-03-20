@@ -56,6 +56,19 @@ app.get('/health', (req, res) => {
   });
 });
 
+// ── 프론트엔드 정적 파일 서빙 ─────────────────────────────────────────
+// 'npm run build'로 생성된 dist/ 폴더를 서빙합니다.
+// dist/가 없으면 (로컬 개발 중) 조용히 skip
+const distPath = require('path').join(__dirname, '..', 'client', 'dist');
+if (require('fs').existsSync(distPath)) {
+  app.use(express.static(distPath));
+  // React Router 사용 시 — 모든 경로를 index.html로 fallback
+  app.get('*', (req, res) => {
+    res.sendFile(require('path').join(distPath, 'index.html'));
+  });
+  console.log('[SYSTEM] Static files served from dist/');
+}
+
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
