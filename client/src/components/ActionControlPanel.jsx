@@ -273,12 +273,12 @@ const ActionControlPanel = ({ engine }) => {
                   </div>
                   {/* [수정] 클릭 시 로딩 상태 적용 */}
                   <button 
-                    disabled={isProcessing}
+                    disabled={isHashing}
                     onClick={() => handleAttackAction(startAttack)} 
                     className="w-full bg-brand-danger py-3.5 rounded-xl font-black text-white text-xs font-mono tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-brand-danger/20 disabled:opacity-50"
                   >
-                    {isProcessing ? <RefreshCw size={14} className="animate-spin" /> : <Sword size={14}/>}
-                    {isProcessing ? 'ANALYZING...' : 'INITIATE ATTACK'}
+                    {isHashing ? <RefreshCw size={14} className="animate-spin" /> : <Sword size={14}/>}
+                    {isHashing ? 'ANALYZING...' : 'INITIATE ATTACK'}
                   </button>
                 </motion.div>
               )}
