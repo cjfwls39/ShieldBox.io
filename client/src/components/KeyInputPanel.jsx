@@ -46,6 +46,12 @@ const KeyInputPanel = ({ pw, setPw, isShielded, onGenerate }) => {
         }} 
         placeholder="Secret Key..." 
       />
+      {/* 보안 안내 문구 */}
+      <p className="mt-2.5 text-[10px] text-text-dim font-mono leading-relaxed">
+        <span className="text-brand-danger font-black">⚠</span>
+        {' '}실제 사용 중인 비밀번호 입력을 권장하지 않습니다.{' '}
+        <span className="text-text-dim/60">테스트용 비밀번호를 사용하거나 생성 버튼을 이용하세요.</span>
+      </p>
     </div>
   );
 };

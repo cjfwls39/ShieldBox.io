@@ -8,14 +8,21 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { computeHash } from './useHashEngine';
 import { io } from 'socket.io-client';
 import { HASH_RATES } from '../constants/ShieldBoxConstants';
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000';
+// 배포 시: 프론트와 서버가 같은 주소 → window.location.origin 자동 사용
+// 로컬 개발 시: 포트가 달라서 4000으로 fallback
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
+  || (typeof window !== 'undefined' && window.location.port !== '5173'
+      ? window.location.origin
+      : 'http://localhost:4000');
 const socket = io(BACKEND_URL);
 
 export function useShieldEngine() {
   const [pw, setPw] = useState('');
+  const [isHashing, setIsHashing] = useState(false);
   const [logs, setLogs] = useState([]);
   const [res, setRes] = useState('');
   const [isShielded, setIsShielded] = useState(false);
@@ -61,6 +68,43 @@ export function useShieldEngine() {
       socket.off('attack_analysis_result');
     };
   }, []);
+
+  /**
+   * 🛡️ 해싱 실행 — 브라우저에서 직접 연산 후 서버에 결과만 전달
+   */
+  const startHashing = useCallback(async (password, isGenerated = false) => {
+    if (!password) return;
+    setIsHashing(true);
+    setLogs([]);
+    setRes('');
+
+    try {
+      socket.emit('log', 'S: [HASHING] 브라우저에서 해싱 연산 시작...');
+
+      const { hash, algorithm, config: hashedConfig, warnings, profile } = await computeHash(
+        password,
+        config
+      );
+
+      if (warnings?.length) {
+        socket.emit('log', `S: [INFO] 기기(${profile}) 기준 파라미터 조정: ${warnings.join(', ')}`);
+      }
+
+      // 서버에 해시값 전달 (평문은 전송하지 않음)
+      socket.emit('submit_hash', {
+        hash,
+        algorithm,
+        config: hashedConfig,
+        password,    // 공격 시뮬레이션의 wordlist 매칭에만 사용
+        isGenerated,
+        warnings,
+      });
+    } catch (err) {
+      setLogs(prev => [...prev, `S: [ERROR] 해싱 실패: ${err.message}`]);
+    } finally {
+      setIsHashing(false);
+    }
+  }, [config]);
 
   /**
    * 🚀 [New] 분석 시작 통합 함수 (Dispatcher)
@@ -188,6 +232,6 @@ export function useShieldEngine() {
     config, setConfig, attackConfig, setAttackConfig,
     selectedAlgo, setSelectedAlgo, selectedAttackMethod, setSelectedAttackMethod,
     selectedHardware, setSelectedHardware, crackTimes,
-    generatePassword, resetEngine, startAttack, socket // startAttack 추가
+    generatePassword, resetEngine, startAttack, startHashing, isHashing, socket
   };
 }

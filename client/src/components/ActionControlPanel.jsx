@@ -6,7 +6,7 @@
  * 2. 원본의 2단계 Depth UI 및 애니메이션 스타일 100% 보존
  */
 
-import React, { useState } from 'react'; // useState 추가
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Settings, ChevronRight, Shield, Sword, Sliders, Cpu, RefreshCw // RefreshCw 추가
@@ -17,14 +17,13 @@ import {
 
 const ActionControlPanel = ({ engine }) => {
   const {
-    pw, config, setConfig, isShielded, 
+    pw, config, setConfig, isShielded,
     attackConfig, setAttackConfig, selectedAlgo, setSelectedAlgo,
-    selectedAttackMethod, setSelectedAttackMethod, selectedHardware, 
-    setSelectedHardware, socket, resetEngine, startAttack 
+    selectedAttackMethod, setSelectedAttackMethod, selectedHardware,
+    setSelectedHardware, resetEngine, startAttack, startHashing, isHashing
   } = engine;
 
-  // --- [추가] 연산 중 상태 관리 ---
-  const [isProcessing, setIsProcessing] = useState(false);
+  // isHashing은 useShieldEngine에서 관리 (브라우저 해싱 진행 중 여부)
 
   // 특정 알고리즘(Bcrypt, Argon2id, Scrypt)은 설계상 솔트가 필수입니다.
   const isInternalSaltAlgo = ['bcrypt', 'argon2id', 'scrypt'].includes(config.algorithm);
@@ -35,19 +34,9 @@ const ActionControlPanel = ({ engine }) => {
     setConfig(prev => ({ ...prev, pepperValue: pepper, usePepper: true }));
   };
 
-  // --- [추가] 무거운 연산 실행을 위한 래퍼 함수 ---
-  const handleAsyncAction = (actionFn) => {
-    if (isProcessing) return;
-    setIsProcessing(true);
-    
-    // 브라우저가 '로딩 중' UI를 그릴 수 있도록 50ms의 틱을 줍니다.
-    setTimeout(async () => {
-      try {
-        await actionFn();
-      } finally {
-        setIsProcessing(false);
-      }
-    }, 50);
+  // 공격 분석 전용 래퍼 (해싱은 startHashing이 직접 처리)
+  const handleAttackAction = (actionFn) => {
+    setTimeout(async () => { await actionFn(); }, 50);
   };
 
   return (
@@ -88,13 +77,13 @@ const ActionControlPanel = ({ engine }) => {
                     ))}
                   </div>
                   {/* [수정] 클릭 시 로딩 상태 적용 */}
-                  <button 
-                    disabled={isProcessing || !pw}
-                    onClick={() => handleAsyncAction(() => socket.emit('start_hashing', { password: pw, algorithm: config.algorithm, config }))} 
+                  <button
+                    disabled={isHashing || !pw}
+                    onClick={() => startHashing(pw)}
                     className="w-full bg-brand-primary py-3.5 rounded-xl font-black text-white text-xs shrink-0 font-mono tracking-widest shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
                   >
-                    {isProcessing ? <RefreshCw size={14} className="animate-spin" /> : <Shield size={14}/>}
-                    {isProcessing ? 'SHIELDING...' : 'INITIATE SHIELDING'}
+                    {isHashing ? <RefreshCw size={14} className="animate-spin" /> : <Shield size={14}/>}
+                    {isHashing ? 'SHIELDING...' : 'INITIATE SHIELDING'}
                   </button>
                 </motion.div>
               ) : (
@@ -175,13 +164,13 @@ const ActionControlPanel = ({ engine }) => {
                         </div>
                       </div>
                       {/* [수정] 클릭 시 로딩 상태 적용 */}
-                      <button 
-                        disabled={isProcessing || !pw}
-                        onClick={() => handleAsyncAction(() => socket.emit('start_hashing', { password: pw, algorithm: config.algorithm, config }))} 
+                      <button
+                        disabled={isHashing || !pw}
+                        onClick={() => startHashing(pw)}
                         className="w-full bg-brand-primary py-3.5 rounded-xl font-black text-white text-xs shrink-0 font-mono tracking-widest flex items-center justify-center gap-2 disabled:opacity-50"
                       >
-                        {isProcessing ? <RefreshCw size={14} className="animate-spin" /> : <Shield size={14}/>}
-                        {isProcessing ? 'SHIELDING...' : 'APPLY & SHIELDING'}
+                        {isHashing ? <RefreshCw size={14} className="animate-spin" /> : <Shield size={14}/>}
+                        {isHashing ? 'SHIELDING...' : 'APPLY & SHIELDING'}
                       </button>
                     </motion.div>
                   );
@@ -285,7 +274,7 @@ const ActionControlPanel = ({ engine }) => {
                   {/* [수정] 클릭 시 로딩 상태 적용 */}
                   <button 
                     disabled={isProcessing}
-                    onClick={() => handleAsyncAction(startAttack)} 
+                    onClick={() => handleAttackAction(startAttack)} 
                     className="w-full bg-brand-danger py-3.5 rounded-xl font-black text-white text-xs font-mono tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-brand-danger/20 disabled:opacity-50"
                   >
                     {isProcessing ? <RefreshCw size={14} className="animate-spin" /> : <Sword size={14}/>}
