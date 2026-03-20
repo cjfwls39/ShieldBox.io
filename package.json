@@ -4,7 +4,7 @@
   "description": "ShieldBox.io — Password Security Analysis Platform",
   "main": "server/server.js",
   "scripts": {
-    "start": "node --max-old-space-size=400 --expose-gc server/server.js",
+    "start": "node --expose-gc server/server.js",
     "build": "npm install --prefix client && npm run build --prefix client",
     "dev:server": "node --watch server/server.js",
     "dev:client": "npm run dev --prefix client"
