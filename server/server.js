@@ -63,7 +63,7 @@ const distPath = require('path').join(__dirname, '..', 'client', 'dist');
 if (require('fs').existsSync(distPath)) {
   app.use(express.static(distPath));
   // React Router 사용 시 — 모든 경로를 index.html로 fallback
-  app.get('*', (req, res) => {
+  app.get('*splat', (req, res) => {
     res.sendFile(require('path').join(distPath, 'index.html'));
   });
   console.log('[SYSTEM] Static files served from dist/');
