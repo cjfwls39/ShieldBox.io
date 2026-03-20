@@ -51,18 +51,18 @@ const cfg = {
       defaultBlockSize:    8,     // r 파라미터
       defaultParallelism:  1,     // p 파라미터
       outputBytes:         64,    // 해시 결과 바이트 길이
-      // ⚠️  Koyeb 512MB 환경 기준 상한 — 기존 1GB에서 하향
-      maxMemBytes:         256 * 1024 * 1024,  // 256MB
+      // ⚠️  Render 무료 플랜 기준 — RSS 70MB 베이스, 안전 상한 64MB
+      maxMemBytes:         64 * 1024 * 1024,   // 64MB
       // 사용자 요청 memoryCost 상한 (MB) — 이 이상이면 강제 하향
-      maxMemoryCostMB:     128,
+      maxMemoryCostMB:     64,
     },
 
     argon2: {
-      defaultMemoryCostMB: 64,    // memoryCost (MB) — 라이브러리 내부에서 ×1024 → KiB 변환
+      defaultMemoryCostMB: 32,    // memoryCost (MB) — Render 무료 기준 절반으로 하향
       defaultTimeCost:     3,     // 반복 횟수 (iterations)
       defaultParallelism:  4,     // 병렬 스레드 수
       // 사용자 요청 상한 — 이 이상이면 강제 하향
-      maxMemoryCostMB:     128,
+      maxMemoryCostMB:     64,
       maxTimeCost:         5,
     },
 
