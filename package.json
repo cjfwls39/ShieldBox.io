@@ -1,25 +1,30 @@
 {
   "name": "shieldbox.io",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "ShieldBox.io — Password Security Analysis Platform",
+  "main": "server/server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server/server.js",
+    "dev:server": "node --watch server/server.js",
+    "dev:client": "vite",
+    "build": "vite build"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "argon2": "^0.44.0",
-    "bcrypt": "^6.0.0",
-    "bcryptjs": "^3.0.3",
-    "cors": "^2.8.6",
-    "dotenv": "^17.3.1",
-    "express": "^5.2.1",
-    "framer-motion": "^12.35.0",
-    "lucide-react": "^0.577.0",
-    "socket.io": "^4.8.3",
+    "argon2":    "^0.44.0",
+    "bcryptjs":  "^3.0.3",
+    "cors":      "^2.8.6",
+    "dotenv":    "^17.3.1",
+    "express":   "^5.2.1",
+    "socket.io": "^4.8.3"
+  },
+  "devDependencies": {
     "socket.io-client": "^4.8.3"
   }
 }

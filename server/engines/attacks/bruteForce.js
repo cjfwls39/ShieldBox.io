@@ -17,13 +17,14 @@ const {
   GRADE_ORDER
 } = require('../../core_logic/attackCore'); 
 const { generateReport } = require('../../data/attackReportTemplates');
+const cfg = require('../../config/shield-config');
 
 const CHARSET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()';
 
 /**
  * 실시간 해시 대입 시뮬레이션 (짧은 암호 전용 - 시각적 증명용)
  */
-const actualBruteForce = (targetHash, algorithm, config, maxAttempts = 500_000) => {
+const actualBruteForce = (targetHash, algorithm, config, maxAttempts = cfg.attacks.bruteForce.realtimeMaxTries) => {
   let attempts = 0;
   for (let len = 1; len <= 6; len++) {
     const indices = new Array(len).fill(0);
@@ -68,7 +69,7 @@ const analyze = (data) => {
   const crackLabel = formatSeconds(crackSec);
 
   // 3. [Simulation] 6자 이하 실시간 충돌 테스트
-  const doActual = canActuallyVerify(algorithm, pwLen) && targetHash;
+  const doActual = canActuallyVerify(algorithm, pwLen <= cfg.attacks.bruteForce.realtimeMaxLen) && targetHash;
   let actualResult = null;
   if (doActual) {
     logs.push(`[Brute Force] 실시간 충돌 테스트: ${pwLen}자 Short Password에 대한 고속 루프 가동...`);

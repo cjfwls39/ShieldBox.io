@@ -7,6 +7,7 @@
  */
 
 const bcrypt = require('bcryptjs');
+const cfg    = require('../../config/shield-config');
 
 /**
  * Bcrypt 해시 연산 실행
@@ -25,7 +26,7 @@ const run = async (pw, config) => {
         // 2. Salt 생성 및 Cost Factor 적용
         // - costFactor: 2^n회 반복을 의미하며, 1을 올릴 때마다 연산 시간이 2배로 증가합니다.
         // - physicsEngine.js의 기준값인 12를 기본값으로 사용합니다.
-        const salt = await bcrypt.genSalt(config.costFactor || 12);
+        const salt = await bcrypt.genSalt(config.costFactor || cfg.hashing.bcrypt.defaultCostFactor);
 
         // 3. 실제 해시 연산 수행
         // bcrypt는 내부적으로 salt를 해시 결과값($2b$12$...)에 포함시킵니다.

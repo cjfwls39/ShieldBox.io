@@ -14,6 +14,7 @@
  */
 
 const { HASH_RATES, ATTACK_MULTIPLIERS } = require('./cryptoRegistry');
+const cfg = require('../config/shield-config');
 
 // ─────────────────────────────────────────────────────────────────────────
 // [BUG-03] Scrypt 실효 메모리(MB) 계산 헬퍼
@@ -42,22 +43,22 @@ const scryptEffectiveMB = (targetMB) => {
 const getParamPenalty = (algorithm, config) => {
   switch (algorithm) {
     case 'bcrypt':
-      return Math.pow(2, (config.costFactor || 12) - 12);
+      return Math.pow(2, (config.costFactor || cfg.physics.baseline.bcrypt.costFactor) - cfg.physics.baseline.bcrypt.costFactor);
 
     case 'argon2id': {
       // 병렬성이 높을수록 공격자가 점유해야 할 총 자원이 늘어나므로 곱셈 처리
-      const memPenalty   = (config.memoryCost || 64) / 64;
-      const iterPenalty  = (config.timeCost   || 3)  / 3;
-      const parallelGain = (config.parallelism || 4)  / 4;
+      const memPenalty   = (config.memoryCost || cfg.physics.baseline.argon2id.memoryCostMB) / cfg.physics.baseline.argon2id.memoryCostMB;
+      const iterPenalty  = (config.timeCost   || cfg.physics.baseline.argon2id.timeCost) / cfg.physics.baseline.argon2id.timeCost;
+      const parallelGain = (config.parallelism || cfg.physics.baseline.argon2id.parallelism) / cfg.physics.baseline.argon2id.parallelism;
       return memPenalty * iterPenalty * parallelGain;
     }
 
     case 'scrypt': {
       // [BUG-03] 기존: (config.memoryCost || 32) / 32  ← UI 설정값 그대로 사용
       //          수정: scryptEffectiveMB(targetMB) / 32 ← 실제 N 기반 값으로 계산
-      const targetMB      = config.memoryCost || 32;
+      const targetMB      = config.memoryCost || cfg.physics.baseline.scrypt.memoryCostMB;
       const effectiveMB   = scryptEffectiveMB(targetMB);
-      const memPenalty    = effectiveMB / 32;
+      const memPenalty    = effectiveMB / cfg.physics.baseline.scrypt.memoryCostMB;
       const blockPenalty  = (config.blockSize  || 8) / 8;
       const parallelCost  = config.parallelism || 1;
       return memPenalty * blockPenalty * parallelCost;
@@ -65,7 +66,7 @@ const getParamPenalty = (algorithm, config) => {
 
     case 'sha256':
     case 'sha512':
-      return Math.max((config.iterations || 100000) / 100000, 1e-6);
+      return Math.max((config.iterations || cfg.physics.baseline.sha.iterations) / cfg.physics.baseline.sha.iterations, 1e-6);
 
     default:
       return 1;
@@ -90,7 +91,7 @@ const calcCrackTime = (
 
   let searchSpace;
   if (isStuffing) {
-    searchSpace = 14_000_000_000; // 다크웹 유출 DB 평균 규모 (140억 건)
+    searchSpace = cfg.physics.credentialStuffingDbSize; // 다크웹 유출 DB 평균 규모
   } else if (typeof pwLenOrSpace === 'object' && pwLenOrSpace.wordlistSize) {
     searchSpace = pwLenOrSpace.wordlistSize;
   } else {

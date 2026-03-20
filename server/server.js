@@ -9,7 +9,10 @@
  *      전체 파이프라인에서 attackConfig 값이 유실되지 않도록 수정
  */
 
-require('dotenv').config();
+// __dirname = server/ → 한 단계 위 루트의 .env를 참조 (통합 환경변수 파일)
+require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
+const cfg   = require('./config/shield-config');
+const guard = require('./guards/memoryGuard');
 const express = require('express');
 const http    = require('http');
 const { Server } = require('socket.io');
@@ -40,7 +43,19 @@ const hashingEngines = {
 };
 
 const app = express();
+app.set('trust proxy', 1); // Koyeb 리버스 프록시에서 실제 IP 추출
 app.use(cors());
+// ── Health Check — Koyeb 생존 확인용 ──────────────────────────────────
+app.get('/health', (req, res) => {
+  const mem = guard.checkMemory();
+  res.status(200).json({
+    status:   'ok',
+    memory:   `${mem.usedMB}MB / ${mem.totalMB}MB (${Math.round(mem.ratio * 100)}%)`,
+    guard:    mem.state,
+    uptime:   Math.round(process.uptime()) + 's',
+  });
+});
+
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
@@ -53,19 +68,34 @@ const io = new Server(server, {
 const sessionStore = new Map();
 
 io.on('connection', (socket) => {
-  console.log(`[SYSTEM] Client Connected: ${socket.id}`);
+  // 실제 클라이언트 IP (trust proxy 설정으로 X-Forwarded-For 신뢰)
+  const clientIp = socket.handshake.headers['x-forwarded-for']?.split(',')[0]?.trim()
+                || socket.handshake.address
+                || 'unknown';
+  console.log(`[SYSTEM] Client Connected: ${socket.id} (${clientIp})`);
 
   // ── 1. 해싱 및 세션 초기화 (방어막 생성) ──────────────────────────────
   socket.on('start_hashing', async (data) => {
     const { password, algorithm, config, isGenerated } = data;
 
     try {
+      // ── Guard: Rate Limit + Circuit Breaker + Safeguard ──
+      const hashGuard = guard.guardHashing(clientIp, algorithm, config);
+      if (!hashGuard.allowed) {
+        socket.emit('log', `S: ${hashGuard.message}`);
+        return;
+      }
+      if (hashGuard.adjustments?.length) {
+        socket.emit('log', `S: [SAFEGUARD] 서버 부하로 인해 파라미터가 조정되었습니다: ${hashGuard.adjustments.join(', ')}`);
+      }
+      const safeConfig = hashGuard.config; // clamp된 config 사용
+
       console.log(`[SHIELD-IN] Attempting Hashing | Algo: ${algorithm}`);
 
       const engine = hashingEngines[algorithm];
       if (!engine) throw new Error('지원하지 않는 알고리즘입니다.');
 
-      const finalConfig = { ...config, systemPepper: process.env.SYSTEM_SECRET_PEPPER || '' };
+      const finalConfig = { ...safeConfig, systemPepper: process.env.SYSTEM_SECRET_PEPPER || '' };
       const hashedPassword = await engine.run(password, finalConfig);
 
       // 기존 세션이 있다면 초기화 후 새 데이터 저장 (Fresh Start)
@@ -88,6 +118,13 @@ io.on('connection', (socket) => {
 
   // ── 2. 공격 시뮬레이션 및 결과 전송 ───────────────────────────────────
   socket.on('start_attack', async (data) => {
+    // ── Guard: Rate Limit + Circuit Breaker ──
+    const attackGuard = guard.guardAttack(clientIp);
+    if (!attackGuard.allowed) {
+      socket.emit('log', `A: ${attackGuard.message}`);
+      return;
+    }
+
     // [BUG-04] 기존: { method, hardware, threads, intensity }만 구조분해
     //          수정: wordlistSize, ruleSet까지 함께 추출
     const {
@@ -129,7 +166,7 @@ io.on('connection', (socket) => {
       // 시나리오 기반 로그 순차 전송
       for (const log of result.simulationLogs) {
         socket.emit('log', `A: ${log}`);
-        await new Promise((r) => setTimeout(r, 200));
+        await new Promise((r) => setTimeout(r, cfg.simulation.logDelayMs));
       }
 
       // 최종 결과 전송
@@ -156,6 +193,17 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 4000;
-server.listen(PORT, () => {
-  console.log(`ShieldBox.io Core Running on Port ${PORT}`);
+server.listen(PORT, cfg.server.host, () => {
+  console.log(`[SYSTEM] ShieldBox.io Core Running on ${cfg.server.host}:${PORT}`);
+});
+
+// ── 크래시 안전망 — 예상치 못한 에러로 프로세스가 죽는 것을 방지 ────────────
+process.on('uncaughtException', (err) => {
+  console.error('[CRITICAL] Uncaught Exception:', err.message);
+  console.error(err.stack);
+  // 프로세스를 죽이지 않고 계속 실행 (Koyeb 자동 재시작에 의존하지 않음)
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('[CRITICAL] Unhandled Promise Rejection:', reason);
 });

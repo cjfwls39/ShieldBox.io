@@ -7,6 +7,7 @@
  */
 
 const argon2 = require('argon2');
+const cfg    = require('../../config/shield-config');
 
 /**
  * Argon2id 해시 연산 실행
@@ -29,9 +30,9 @@ const run = async (pw, config) => {
          * - type: 보안성이 가장 검증된 argon2id 모드 강제 적용
          */
         const options = {
-            memoryCost: (config.memoryCost || 64) * 1024, 
-            timeCost: config.timeCost || 3,
-            parallelism: config.parallelism || 4,
+            memoryCost: (config.memoryCost || cfg.hashing.argon2.defaultMemoryCostMB) * 1024,
+            timeCost: config.timeCost || cfg.hashing.argon2.defaultTimeCost,
+            parallelism: config.parallelism || cfg.hashing.argon2.defaultParallelism,
             type: argon2.argon2id 
         };
 

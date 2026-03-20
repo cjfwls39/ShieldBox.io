@@ -34,6 +34,7 @@ const {
   ALGO_CEILING,
 } = require('../../core_logic/attackCore');
 const { generateReport } = require('../../data/attackReportTemplates');
+const cfg = require('../../config/shield-config');
 
 // ─── 알고리즘별 충돌 취약성 프로파일 ──────────────────────────────────────
 //
@@ -45,13 +46,14 @@ const { generateReport } = require('../../data/attackReportTemplates');
 // isVulnerable: false이면 충돌 공격이 이 알고리즘의 보안에 영향을 줄 수 없음
 //   - bcrypt/scrypt/argon2id는 비밀번호 검증에 전용 compare 함수를 사용하므로
 //     충돌값이 있어도 실제 인증 우회가 불가능
+const eb = cfg.attacks.collision.effectiveBits;
 const COLLISION_PROFILES = {
-  md5:      { hashBits: 128, effectiveBits: 39,  isVulnerable: true,  knownAttack: 'Wang et al. (2004) — Differential Cryptanalysis' },
-  sha256:   { hashBits: 256, effectiveBits: 128, isVulnerable: true,  knownAttack: 'No known practical attack — Birthday Bound applies' },
-  sha512:   { hashBits: 512, effectiveBits: 256, isVulnerable: true,  knownAttack: 'No known practical attack — Birthday Bound applies' },
-  bcrypt:   { hashBits: 128, effectiveBits: 128, isVulnerable: false, knownAttack: 'N/A — KDF design prevents collision exploitation' },
-  scrypt:   { hashBits: 256, effectiveBits: 256, isVulnerable: false, knownAttack: 'N/A — Salted KDF, collision has no exploitable impact' },
-  argon2id: { hashBits: 256, effectiveBits: 256, isVulnerable: false, knownAttack: 'N/A — DIAM design with mandatory unique salt per hash' },
+  md5:      { hashBits: 128, effectiveBits: eb.md5,      isVulnerable: true,  knownAttack: 'Wang et al. (2004) — Differential Cryptanalysis' },
+  sha256:   { hashBits: 256, effectiveBits: eb.sha256,   isVulnerable: true,  knownAttack: 'No known practical attack — Birthday Bound applies' },
+  sha512:   { hashBits: 512, effectiveBits: eb.sha512,   isVulnerable: true,  knownAttack: 'No known practical attack — Birthday Bound applies' },
+  bcrypt:   { hashBits: 128, effectiveBits: eb.bcrypt,   isVulnerable: false, knownAttack: 'N/A — KDF design prevents collision exploitation' },
+  scrypt:   { hashBits: 256, effectiveBits: eb.scrypt,   isVulnerable: false, knownAttack: 'N/A — Salted KDF, collision has no exploitable impact' },
+  argon2id: { hashBits: 256, effectiveBits: eb.argon2id, isVulnerable: false, knownAttack: 'N/A — DIAM design with mandatory unique salt per hash' },
 };
 
 // ─── 하드웨어별 해시 속도 매핑 (crypto_standards.json의 GPU 기준 값 사용) ──
@@ -60,13 +62,7 @@ const getCollisionRate = (algorithm, hardware) => {
   const rates = HASH_RATES[algorithm] || HASH_RATES.md5;
   if (hardware === 'quantum') return rates.quantum;
   // ASIC, GPU Cluster, Cloud Farm은 GPU 속도 기준으로 하드웨어 계수 적용
-  const hwMultiplier = {
-    single_cpu:  0.06,   // GPU 대비 6% (CPU는 병렬 충돌 탐색에 매우 비효율적)
-    gpu_single:  0.45,   // RTX 4090 단일
-    gpu_cluster: 1.0,    // 8× RTX 4090 기준
-    asic:        3.5,    // ASIC은 특정 알고리즘 전용 — MD5의 경우 압도적
-    cloud_farm:  2.0,    // AWS p4d.24xl 수준
-  };
+  const hwMultiplier = cfg.attacks.collision.hwMultiplier;
   const mul = hwMultiplier[hardware] || 1.0;
   return rates.gpu * mul;
 };

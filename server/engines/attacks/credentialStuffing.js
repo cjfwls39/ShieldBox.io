@@ -18,6 +18,7 @@
  */
 
 const { isInWordlist, RULES } = require('../../data/wordlist');
+const cfg = require('../../config/shield-config');
 const {
   calcCrackTime,
   scoreFromSeconds,
@@ -37,8 +38,8 @@ const diversityPenalty = (pw) => {
     /[^a-zA-Z0-9]/.test(pw),
   ].filter(Boolean).length;
 
-  if (kinds === 1) return { score: 30, label: `단일문자종류(${kinds}종)` };
-  if (kinds === 2) return { score: 15, label: `2종류문자(${kinds}종)` };
+  if (kinds === 1) return { score: cfg.attacks.credentialStuffing.diversityPenalty.oneKind, label: `단일문자종류(${kinds}종)` };
+  if (kinds === 2) return { score: cfg.attacks.credentialStuffing.diversityPenalty.twoKind, label: `2종류문자(${kinds}종)` };
   return { score: 0, label: null };
 };
 
@@ -52,19 +53,19 @@ const repetitionPenalty = (pw) => {
   const labels = [];
 
   if (/(.)\1{2,}/.test(p)) {
-    score += 25;
+    score += cfg.attacks.credentialStuffing.repetitionPenalty.sameChar;
     labels.push('동일문자반복');
   }
   if (/(012|123|234|345|456|567|678|789|890)/.test(p)) {
-    score += 20;
+    score += cfg.attacks.credentialStuffing.repetitionPenalty.numSequence;
     labels.push('숫자순차');
   }
   if (/(abc|bcd|cde|def|efg|fgh|ghi|hij|ijk|jkl|klm|lmn|mno|nop|opq|pqr|qrs|rst|stu|tuv|uvw|vwx|wxy|xyz)/.test(p)) {
-    score += 15;
+    score += cfg.attacks.credentialStuffing.repetitionPenalty.alphaSeq;
     labels.push('알파벳순차');
   }
 
-  return { score: Math.min(score, 40), label: labels.join('+') || null };
+  return { score: Math.min(score, cfg.attacks.credentialStuffing.repetitionPenalty.max), label: labels.join('+') || null };
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -77,26 +78,26 @@ const personalInfoPenalty = (pw) => {
 
   // 한국 전화번호형 (010-XXXX-XXXX 등)
   if (/^01[016789][0-9]{7,8}$/.test(pw)) {
-    score += 35;
+    score += cfg.attacks.credentialStuffing.personalInfoPenalty.phoneNumber;
     labels.push('전화번호형');
   }
   // 생년월일형 YYYYMMDD
   if (/(19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])/.test(pw)) {
-    score += 30;
+    score += cfg.attacks.credentialStuffing.personalInfoPenalty.birthdate;
     labels.push('생년월일형');
   }
   // 연도 포함 (1950~2029)
   if (/(19[5-9]\d|20[0-2]\d)/.test(pw)) {
-    score += 10;
+    score += cfg.attacks.credentialStuffing.personalInfoPenalty.yearInclude;
     labels.push('연도포함');
   }
   // 8자리 이상 순수 숫자
   if (/^\d{8,}$/.test(pw)) {
-    score += 25;
+    score += cfg.attacks.credentialStuffing.personalInfoPenalty.pureDigit8;
     labels.push('순수숫자8자+');
   }
 
-  return { score: Math.min(score, 50), label: labels.join('+') || null };
+  return { score: Math.min(score, cfg.attacks.credentialStuffing.personalInfoPenalty.max), label: labels.join('+') || null };
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -105,7 +106,7 @@ const personalInfoPenalty = (pw) => {
 // 18자 이상은 길이 자체가 충분한 보호 — 구조 패널티 면제
 // ─────────────────────────────────────────────────────────────
 const structurePenalty = (pw) => {
-  if (pw.length >= 18) return { score: 0, label: null };
+  if (pw.length >= cfg.attacks.credentialStuffing.structurePenalty.lengthExempt) return { score: 0, label: null };
 
   let intensity = 0;
   if (/^[A-Z]/.test(pw))                                          intensity += 2;
@@ -117,7 +118,7 @@ const structurePenalty = (pw) => {
   if (symbolCount === 1)                                           intensity += 2;
   intensity = Math.min(10, intensity);
 
-  if (intensity >= 8) return { score: 20, label: `매우전형적구조(L${intensity})` };
+  if (intensity >= 8) return { score: cfg.attacks.credentialStuffing.structurePenalty.max, label: `매우전형적구조(L${intensity})` };
   if (intensity >= 6) return { score: 10, label: `전형적구조(L${intensity})` };
   if (intensity >= 4) return { score: 5,  label: `약한구조(L${intensity})` };
   return { score: 0, label: null };
@@ -152,7 +153,8 @@ const calcReuseProb = (pw) => {
   const signals = [];
 
   // 기저: 길이 기반 기초값
-  let prob = Math.max(5, 50 - (pw.length * 2));
+  const pb = cfg.attacks.credentialStuffing.probBase;
+  let prob = Math.max(pb.baseMin, pb.baseMax - (pw.length * pb.lenWeight));
   signals.push(`기저=${prob}`);
 
   // 신호 누적
@@ -170,7 +172,7 @@ const calcReuseProb = (pw) => {
 
   const sufResult = hasWordSuffix(pw);
   if (sufResult.has) {
-    prob += 20;
+    prob += cfg.attacks.credentialStuffing.suffixBonus;
     signals.push(`단어+suffix(${sufResult.core}+${sufResult.suffix})`);
   }
 
@@ -185,9 +187,9 @@ const calcReuseProb = (pw) => {
 // 재사용 위험도 → 등급 매핑
 // ─────────────────────────────────────────────────────────────
 const reuseRiskGrade = (prob, pwLen, hasSuf) => {
-  if (hasSuf || prob >= 50) return 'D';
-  if (prob >= 30)           return 'C';
-  if (pwLen >= 14 && prob < 15) return 'A';
+  if (hasSuf || prob >= cfg.attacks.credentialStuffing.gradeThreshold.D) return 'D';
+  if (prob >= cfg.attacks.credentialStuffing.gradeThreshold.C)           return 'C';
+  if (pwLen >= cfg.attacks.credentialStuffing.gradeThreshold.A_minLen && prob < cfg.attacks.credentialStuffing.gradeThreshold.A_maxProb) return 'A';
   return 'B';
 };
 

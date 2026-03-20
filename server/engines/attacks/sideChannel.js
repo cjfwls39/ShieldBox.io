@@ -11,7 +11,7 @@
  *      터미널 로그와 패널티 메시지에 명확히 표현
  */
 
-const physicalDB      = require('../../data/configs/physical_benchmarks.json');
+const cfg             = require('../../config/shield-config');
 const { scoreFromSeconds } = require('../../core_logic/attackCore');
 const { generateReport }   = require('../../data/attackReportTemplates');
 
@@ -35,14 +35,14 @@ const analyze = (data) => {
   const algorithm = shieldConfig.algorithm;
 
   // 1. [Data Fetching] 외부 벤치마크 데이터셋 연동
-  const algoProfile = physicalDB.algorithm_timing_profiles[algorithm]
-                   || physicalDB.algorithm_timing_profiles['default'];
-  const hwProfile   = physicalDB.hardware_noise_profiles[hardware]
-                   || physicalDB.hardware_noise_profiles['pc'];
+  const algoProfile = cfg.timingProfiles.algorithms[algorithm]
+                   || cfg.timingProfiles.algorithms['default'];
+  const hwProfile   = cfg.timingProfiles.hardware[hardware]
+                   || cfg.timingProfiles.hardware['pc'];
 
-  const deltaT     = algoProfile.base_delta_t;
-  const sigmaNoise = hwProfile.sigma_noise;
-  const N          = Math.pow(10, (intensity / 2) + 2); // 샘플 수
+  const deltaT     = algoProfile.baseDeltaT;
+  const sigmaNoise = hwProfile.sigmaNoise;
+  const N          = Math.pow(10, (intensity / 2) + cfg.attacks.sideChannel.sampleExponentBase); // 샘플 수
 
   // 2. [Mathematics] 가우시안 통계 확률 모델링
   const SNR      = deltaT / sigmaNoise;
@@ -75,10 +75,11 @@ const analyze = (data) => {
   // 4. [Judgment] 확률 기반 등급 판정
   let grade, penalties = [];
 
-  if (pSuccess < 0.05)       grade = 'S';
-  else if (pSuccess < 0.20)  grade = 'A';
-  else if (pSuccess < 0.50)  grade = 'B';
-  else if (pSuccess < 0.80)  grade = 'C';
+  const gt = cfg.attacks.sideChannel.gradeThreshold;
+  if (pSuccess < gt.S)       grade = 'S';
+  else if (pSuccess < gt.A)  grade = 'A';
+  else if (pSuccess < gt.B)  grade = 'B';
+  else if (pSuccess < gt.C)  grade = 'C';
   else                       grade = 'D';
 
   if (isConstantTime) {

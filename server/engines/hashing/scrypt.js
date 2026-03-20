@@ -7,6 +7,7 @@
  */
 
 const crypto = require('crypto');
+const cfg    = require('../../config/shield-config');
 const { promisify } = require('util');
 
 // Node.js의 내장 scrypt 함수를 Promise 기반으로 변환하여 비동기 처리를 지원합니다.
@@ -36,18 +37,18 @@ const run = async (pw, config) => {
          * r=8(기본값)일 때, 128 * N * 8 = 1024 * N입니다.
          * 즉, N을 (MB * 1024)로 설정해야 사용자가 의도한 메모리(MB)가 정확히 점유됩니다.
          */
-        const targetMB = config.memoryCost || 32;
+        const targetMB = config.memoryCost || cfg.hashing.scrypt.defaultMemoryCostMB;
         const options = {
             // UI 슬라이더 수치(MB)를 2의 거듭제곱인 N 파라미터로 정밀 변환
             N: Math.pow(2, Math.floor(Math.log2(targetMB * 1024))), 
-            r: config.blockSize || 8,
-            p: config.parallelism || 1,
-            // 고사양 시뮬레이션을 위해 최대 메모리 제한을 1GB로 상향 조정
-            maxmem: 1024 * 1024 * 1024 
+            r: config.blockSize || cfg.hashing.scrypt.defaultBlockSize,
+            p: config.parallelism || cfg.hashing.scrypt.defaultParallelism,
+            // config에서 관리 (기본 256MB — Koyeb 512MB 환경 기준)
+            maxmem: cfg.hashing.scrypt.maxMemBytes
         };
 
         // 4. 실제 해시 연산 수행 (64바이트 길이의 결과물 생성)
-        const derivedKey = await scrypt(targetInput, salt, 64, options);
+        const derivedKey = await scrypt(targetInput, salt, cfg.hashing.scrypt.outputBytes, options);
 
         const hash = derivedKey.toString('hex');
 

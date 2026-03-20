@@ -27,13 +27,14 @@ const {
   GRADE_ORDER,
 } = require('../../core_logic/attackCore');
 const { generateReport } = require('../../data/attackReportTemplates');
+const cfg = require('../../config/shield-config');
 
 const analyze = (data) => {
   const { shieldConfig, pwLen, hardware, password, wordlistSize } = data;
   const algorithm = shieldConfig.algorithm;
 
   // [BUG-04] UI에서 설정한 wordlistSize를 사용, 미전달 시 기본값 20,000
-  const effectiveWordlistSize = wordlistSize || 20000;
+  const effectiveWordlistSize = wordlistSize || cfg.attacks.dictionary.defaultWordlistSize;
 
   // 1. [Process] Visual Logs for Terminal
   const logs = [

@@ -3,21 +3,23 @@
 # [위치] 프로젝트 최상단 루트 (/)
 # ==========================================
 
-# 1. 의존성 및 빌드 결과물 (Dependencies & Build)
+# 1. 의존성 및 빌드 결과물
 node_modules/
 dist/
 dist-ssr/
 build/
 out/
 
-# 2. 🚨 환경 변수 및 비밀 키 (Security - CRITICAL)
-# 모든 하위 폴더의 환경 변수 파일을 원천 차단합니다.
+# 2. 환경 변수 (실제 값 — 절대 커밋 금지)
 **/.env
 **/.env.local
 **/.env.*.local
 *.local
 
-# 3. 운영체제 및 에디터 관련 (OS & IDE)
+# .env.example은 커밋 허용 (빈값 템플릿)
+!.env.example
+
+# 3. 운영체제 및 에디터
 .DS_Store
 Thumbs.db
 *.suo
@@ -29,7 +31,7 @@ Thumbs.db
 .idea/
 !.vscode/extensions.json
 
-# 4. 로그 및 디버깅 (Logs)
+# 4. 로그 및 디버깅
 *.log
 logs
 npm-debug.log*

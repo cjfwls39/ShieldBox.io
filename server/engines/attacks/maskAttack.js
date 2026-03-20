@@ -15,6 +15,7 @@ const {
   GRADE_ORDER
 } = require('../../core_logic/attackCore'); 
 const { generateReport } = require('../../data/attackReportTemplates');
+const cfg = require('../../config/shield-config');
 
 /**
  * 암호의 Mask(구조)를 분석하여 정형화 점수 산출
@@ -53,7 +54,8 @@ const analyze = (data) => {
   const intensity = analyzeMaskIntensity(password);
   
   // 정형화 점수가 높을수록 탐색 공간이 기하급수적으로 압축됨을 시뮬레이션
-  const reductionRate = intensity > 7 ? 99.9 : (intensity > 4 ? 85.0 : 40.0);
+  const rr = cfg.attacks.maskAttack.reductionRate;
+  const reductionRate = intensity > cfg.attacks.maskAttack.gradeCap.threshold ? rr.high : (intensity > 4 ? rr.medium : rr.low);
   
   // Mask 공격은 일반 Brute Force보다 훨씬 효율적임 (압축률 반영)
   const baseCrackSec = calcCrackTime(pwLen, algorithm, shieldConfig, hardware, 'brute_force');
@@ -63,7 +65,7 @@ const analyze = (data) => {
   // 3. [Judgment] 하이브리드 보안 판정
   let { grade, penalties } = gradeFromSeconds(maskCrackSec, algorithm, pwLen, shieldConfig);
 
-  if (intensity >= 7) {
+  if (intensity >= cfg.attacks.maskAttack.gradeCap.threshold) {
     logs.push(`[Mask Attack] ⚠ 취약점 감지: 매우 정형화된 Mask Structure 식별 (Intensity: ${intensity})`);
     
     // 구조적 취약성이 높으면 알고리즘 성능과 무관하게 최대 C등급으로 Cap 적용

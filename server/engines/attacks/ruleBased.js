@@ -12,6 +12,7 @@ const {
   GRADE_ORDER
 } = require('../../core_logic/attackCore'); 
 const { generateReport } = require('../../data/attackReportTemplates');
+const cfg = require('../../config/shield-config');
 
 const analyze = (data) => {
   const { shieldConfig, pwLen, hardware, password } = data;
@@ -29,7 +30,8 @@ const analyze = (data) => {
   
   // 규칙 기반 공격은 일반 전수 조사보다 훨씬 효율적임
   const baseCrackSec = calcCrackTime(pwLen, algorithm, shieldConfig, hardware, 'brute_force');
-  const ruleCrackSec = matchResult.found ? baseCrackSec * 0.05 : baseCrackSec * 0.6;
+  const mul = cfg.attacks.ruleBased.crackTimeMultiplier;
+  const ruleCrackSec = matchResult.found ? baseCrackSec * mul.match : baseCrackSec * mul.noMatch;
   const crackLabel = formatSeconds(ruleCrackSec);
 
   // 3. [Judgment] 하이브리드 보안 판정
@@ -62,7 +64,7 @@ const analyze = (data) => {
     matchFound:   matchResult.found,           // 템플릿 서사 분기용 (수정)
     matchWord:    matchResult.word   || 'N/A', // 탐지된 원형 단어
     matchMethod:  matchResult.method || 'N/A', // 탐지 방법
-    recoveryRate: matchResult.found ? "99.0" : "15.0",
+    recoveryRate: matchResult.found ? cfg.attacks.ruleBased.recoveryRate.found : cfg.attacks.ruleBased.recoveryRate.notFound,
     cryptoAnalysis: `Method: ${matchResult.method || 'None'} | Recovery: ${matchResult.found ? 'SUCCESS' : 'FAILED'}`,
     penalties,
     simulationLogs: logs
