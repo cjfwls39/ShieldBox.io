@@ -50,7 +50,7 @@ app.get('/health', (req, res) => {
   const mem = guard.checkMemory();
   res.status(200).json({
     status:   'ok',
-    memory:   `${mem.usedMB}MB / ${mem.totalMB}MB (${Math.round(mem.ratio * 100)}%)`,
+    memory:   `RSS ${mem.rssMB}MB / 400MB (${Math.round(mem.ratio * 100)}%)`,
     rss:      `${mem.rssMB}MB`,
     guard:    mem.state,
     uptime:   Math.round(process.uptime()) + 's',

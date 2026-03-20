@@ -35,12 +35,18 @@ const MEMORY_STATE = {
 // GC 마지막 호출 시각 추적 (너무 자주 호출 방지)
 let lastGcAt = 0;
 
+// RSS 기반 최대 메모리 (--max-old-space-size와 동일)
+const MAX_RSS_MB = 400;
+
 function checkMemory() {
   const { heapUsed, heapTotal, rss } = process.memoryUsage();
-  const ratio   = heapUsed / heapTotal;
-  const usedMB  = Math.round(heapUsed  / 1024 / 1024);
+  const usedMB  = Math.round(heapUsed / 1024 / 1024);
   const totalMB = Math.round(heapTotal / 1024 / 1024);
   const rssMB   = Math.round(rss / 1024 / 1024);
+
+  // heapTotal은 초기에 너무 작게 잡혀 비율이 왜곡됨
+  // → RSS / MAX_RSS_MB 기준으로 실제 메모리 압박 판단
+  const ratio = rssMB / MAX_RSS_MB;
 
   let state;
   if      (ratio >= MEM.circuitBreakerThreshold) state = MEMORY_STATE.CIRCUIT_BREAKER;
