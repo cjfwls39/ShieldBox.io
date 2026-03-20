@@ -191,3 +191,15 @@ ShieldBox.io/
     ├── engines/attacks/          # 8가지 공격 엔진
     └── data/                     # 사전 / 리포트 템플릿
 ```
+
+---
+
+## 📄 라이선스
+
+본 프로젝트는 **MIT License** 하에 배포됩니다.
+
+- 아이디어, 설계, 기획 및 구현 방향 — 저작자 창작
+- 코드 작성 과정에서 AI 도구(Claude by Anthropic) 활용
+- 출처 표기 시 자유롭게 사용 가능
+
+자세한 내용은 [LICENSE](./LICENSE) 파일을 참고하세요.
