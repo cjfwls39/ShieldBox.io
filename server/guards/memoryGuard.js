@@ -32,18 +32,32 @@ const MEMORY_STATE = {
  * 현재 힙 사용률을 측정하고 상태를 반환합니다.
  * @returns {{ state: string, usedMB: number, totalMB: number, ratio: number }}
  */
+// GC 마지막 호출 시각 추적 (너무 자주 호출 방지)
+let lastGcAt = 0;
+
 function checkMemory() {
-  const { heapUsed, heapTotal } = process.memoryUsage();
+  const { heapUsed, heapTotal, rss } = process.memoryUsage();
   const ratio   = heapUsed / heapTotal;
   const usedMB  = Math.round(heapUsed  / 1024 / 1024);
   const totalMB = Math.round(heapTotal / 1024 / 1024);
+  const rssMB   = Math.round(rss / 1024 / 1024);
 
   let state;
   if      (ratio >= MEM.circuitBreakerThreshold) state = MEMORY_STATE.CIRCUIT_BREAKER;
   else if (ratio >= MEM.safeguardThreshold)      state = MEMORY_STATE.SAFEGUARD;
   else                                           state = MEMORY_STATE.OK;
 
-  return { state, usedMB, totalMB, ratio: parseFloat(ratio.toFixed(3)) };
+  // SAFEGUARD 이상일 때 GC 적극 호출 (30초에 한 번으로 제한)
+  if (state !== MEMORY_STATE.OK && global.gc) {
+    const now = Date.now();
+    if (now - lastGcAt > 30_000) {
+      global.gc();
+      lastGcAt = now;
+      console.log(`[GUARD] GC 강제 실행 — 메모리 ${Math.round(ratio * 100)}% (RSS: ${rssMB}MB)`);
+    }
+  }
+
+  return { state, usedMB, totalMB, rssMB, ratio: parseFloat(ratio.toFixed(3)) };
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -299,6 +313,19 @@ function guardAttack(ip) {
 /* ══════════════════════════════════════════════════════════
    Export
 ══════════════════════════════════════════════════════════ */
+// ── 주기적 메모리 정리 스케줄러 ──────────────────────────────────────────
+// 5분마다 GC 실행 + 세션 스토어 외부에서 관리 못하는 메모리 정리
+const PERIODIC_GC_INTERVAL = 5 * 60 * 1000; // 5분
+setInterval(() => {
+  if (global.gc) {
+    global.gc();
+    const { heapUsed, heapTotal, rss } = process.memoryUsage();
+    const ratio = Math.round((heapUsed / heapTotal) * 100);
+    const rssMB = Math.round(rss / 1024 / 1024);
+    console.log(`[GUARD] 주기적 GC 완료 — 힙 ${ratio}% | RSS ${rssMB}MB`);
+  }
+}, PERIODIC_GC_INTERVAL).unref(); // unref: GC 타이머가 프로세스 종료를 막지 않음
+
 module.exports = {
   guardHashing,
   guardAttack,

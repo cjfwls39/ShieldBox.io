@@ -51,6 +51,7 @@ app.get('/health', (req, res) => {
   res.status(200).json({
     status:   'ok',
     memory:   `${mem.usedMB}MB / ${mem.totalMB}MB (${Math.round(mem.ratio * 100)}%)`,
+    rss:      `${mem.rssMB}MB`,
     guard:    mem.state,
     uptime:   Math.round(process.uptime()) + 's',
   });
@@ -202,6 +203,8 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     sessionStore.delete(socket.id);
     console.log(`[SYSTEM] Client Disconnected: ${socket.id}`);
+    // 세션 해제 후 GC 힌트 (즉시 강제 실행은 아님)
+    if (global.gc && sessionStore.size === 0) global.gc();
   });
 });
 
