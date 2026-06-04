@@ -117,6 +117,72 @@
 
 ---
 
+## 🔬 physicsEngine 수치 검증
+
+ShieldBox의 크랙 시간 계산은 physicsEngine이 담당합니다. 이 엔진이 출력하는 수치가 실제 공격 환경과 얼마나 일치하는지 검증하고 교정한 과정을 기록합니다.
+
+### 검증 방법
+
+`server/debug-tester.js`를 작성해 physicsEngine의 계산값을 **Hashcat v6.2.6 RTX 4090 공개 벤치마크** ([Chick3nman, 2022](https://gist.github.com/Chick3nman/32e662a5bb63bc4f51b847bb422222fd))와 직접 비교했습니다.
+
+```bash
+node server/debug-tester.js
+```
+
+### 발견된 문제 (v1)
+
+초기 `hashRates` 설정에는 두 가지 구조적 문제가 있었습니다.
+
+| 문제 | 내용 | 영향 |
+|------|------|------|
+| 하드웨어 미분리 | `gpu_single` (RTX 4090 × 1)과 `gpu_cluster` (× 8)가 동일한 `rates.gpu` 단일값 사용 | Single과 Cluster 선택 시 동일한 크랙 시간 출력 |
+| 속도값 부정확 | MD5: 16.4 GH/s (실측 164.1), scrypt: 500 H/s (실측 3,563) 등 최대 80x 오차 | 일부 알고리즘을 실제보다 과도하게 안전하게 평가 |
+
+### 수정 내용
+
+**`shield-config.js` — hashRates 구조 변경 및 Hashcat 실측값 적용**
+
+| 알고리즘 | 항목 | v1 (구) | v2 (교정) | 출처 |
+|---------|------|---------|----------|------|
+| MD5 | GPU Single | 16.4 GH/s | **164.1 GH/s** | Hashcat Mode 0 실측 |
+| MD5 | GPU Cluster | 16.4 GH/s | **1.31 TH/s** | × 8 선형 스케일 |
+| SHA-256 | GPU Single | 3.5 GH/s | **21.97 GH/s** | Hashcat Mode 1400 실측 |
+| SHA-512 | GPU Single | 3.5 GH/s | **7.48 GH/s** | Hashcat Mode 1700 실측 |
+| bcrypt CF=12 | GPU Single | 5,000 H/s | **1,437 H/s** | Hashcat Mode 3200 (CF=5: 184kH/s ÷ 2⁷) |
+| scrypt 32MB | GPU Single | 500 H/s | **3,563 H/s** | Hashcat Mode 8900 (N=16384: 7,126 ÷ 2) |
+
+**`physicsEngine.js` — hwRate 매핑 변경**
+
+```js
+// v1: 모든 GPU 계열을 단일 rates.gpu로 처리
+const hwRate = hardware.includes('gpu') ? rates.gpu : rates.pc;
+
+// v2: hardware key를 rates 객체에서 직접 참조
+const hwRate = rates[hardware] ?? (hardware.includes('gpu') ? rates.gpu_single : rates.pc);
+```
+
+### 교정 후 검증 결과
+
+기준: 11자 비밀번호(`password123`), 탐색 공간: 94¹¹
+
+| 알고리즘 | 하드웨어 | ShieldBox 예상 | Hashcat 기반 실측 | 배율 |
+|---------|---------|--------------|----------------|------|
+| MD5 | GPU Single (RTX 4090) | 25.71분 | 25.71분 | **1.00x** |
+| MD5 | GPU Cluster (× 8) | 3.21분 | 3.21분 | **1.00x** |
+| SHA-256 | GPU Single | 3,650년 | 3,650년 | **1.00x** |
+| SHA-256 | GPU Cluster | 456년 | 456년 | **1.00x** |
+| SHA-512 | GPU Single | 1.07만년 | 1.07만년 | **1.00x** |
+| bcrypt CF=12 | GPU Single | 558억년 | 558억년 | **1.00x** |
+| bcrypt CF=12 | GPU Cluster | 69.75억년 | 69.73억년 | **1.00x** |
+| scrypt 32MB | GPU Single | 225억년 | 225억년 | **1.00x** |
+| scrypt 32MB | GPU Cluster | 28.15억년 | 28.14억년 | **1.00x** |
+
+비교 가능한 5개 알고리즘(MD5·SHA-256·SHA-512·bcrypt·scrypt) 전 하드웨어 조합에서 **Hashcat 실측 대비 오차 0.1% 이내**를 달성했습니다.
+
+> **argon2id**: Hashcat 공개 벤치마크에 GPU 크래킹 데이터가 없어 비교 불가. 메모리 하드 설계 특성상 GPU 가속이 구조적으로 제한되며, 현행 추정값 유지.
+
+---
+
 ## 📂 시작하기
 
 ### 로컬 개발 환경

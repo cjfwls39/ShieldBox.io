@@ -99,11 +99,14 @@ const calcCrackTime = (
   }
 
   // B. 하드웨어 성능 데이터 추출
+  // rates 객체에 hardware key가 직접 존재하면 우선 사용 (gpu_single/gpu_cluster 분리 대응)
+  // 없으면 기존 fallback 로직으로 처리
   const rates  = HASH_RATES[algorithm] || HASH_RATES.bcrypt;
-  const hwRate =
-    hardware === 'quantum'                                                    ? rates.quantum :
-    (hardware.includes('gpu') || hardware === 'asic' || hardware === 'cloud_farm') ? rates.gpu :
-    rates.pc;
+  const hwRate = rates[hardware] !== undefined ? rates[hardware] : (
+    hardware === 'quantum'                                                         ? rates.quantum :
+    (hardware.includes('gpu') || hardware === 'asic' || hardware === 'cloud_farm') ? (rates.gpu_single ?? rates.gpu) :
+    rates.pc
+  );
 
   // C. 알고리즘 고유 부하(Work Factor) 적용
   const workFactor = getParamPenalty(algorithm, config);

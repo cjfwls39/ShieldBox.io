@@ -216,7 +216,7 @@ export function useShieldEngine() {
     };
 
     const pcRes = calculate(baseRates.pc);
-    const gpuRes = calculate(baseRates.gpu);
+    const gpuRes = calculate(baseRates.gpu_cluster ?? baseRates.gpu); // GPU Cluster 기준
     const qmRes = calculate(baseRates.quantum);
 
     return {

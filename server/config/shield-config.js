@@ -238,13 +238,65 @@ const cfg = {
      7. HASH RATES — 하드웨어별 초당 해시 속도 (H/s)
      출처: data/configs/crypto_standards.json
   ══════════════════════════════════════════════════════════ */
+  // ── hashRates 교정 이력 ────────────────────────────────────────────────────
+  // [v1] gpu 단일값 사용 (gpu_single / gpu_cluster 미구분)
+  // [v2] Hashcat v6.2.6 RTX 4090 공개 벤치마크 기반 교정
+  //      출처: https://gist.github.com/Chick3nman/32e662a5bb63bc4f51b847bb422222fd
+  //      - gpu_single : RTX 4090 1대 실측값
+  //      - gpu_cluster: RTX 4090 × 8 (선형 스케일)
+  //      - asic       : 빠른 해시(MD5/SHA)는 GPU 클러스터 × 2.3 추정
+  //                     메모리 하드(bcrypt/scrypt/argon2id)는 ASIC 이점 없어 클러스터와 동일
+  //      - cloud_farm : AWS p4d.24xl(8× A100) ≈ GPU 클러스터 동급
+  // ───────────────────────────────────────────────────────────────────────────
   hashRates: {
-    md5:      { pc: 1_000_000_000,   gpu: 16_400_000_000,  quantum: 100_000_000_000_000 },
-    sha256:   { pc:   500_000_000,   gpu:  3_500_000_000,  quantum:  10_000_000_000_000 },
-    sha512:   { pc:   200_000_000,   gpu:  3_500_000_000,  quantum:  10_000_000_000_000 },
-    bcrypt:   { pc:           100,   gpu:          5_000,  quantum:          10_000_000 },
-    scrypt:   { pc:            50,   gpu:            500,  quantum:           1_000_000 },
-    argon2id: { pc:            10,   gpu:             50,  quantum:             500_000 },
+    md5: {
+      pc:          1_000_000_000,
+      gpu_single:  164_100_000_000,     // Hashcat 실측: 164.1 GH/s
+      gpu_cluster: 1_312_800_000_000,   // × 8: 1.31 TH/s
+      asic:        3_000_000_000_000,   // 추정: GPU 클러스터 × 2.3
+      cloud_farm:  1_312_800_000_000,   // AWS p4d.24xl ≈ GPU 클러스터
+      quantum:     100_000_000_000_000,
+    },
+    sha256: {
+      pc:          500_000_000,
+      gpu_single:  21_975_000_000,      // Hashcat 실측: 21.97 GH/s
+      gpu_cluster: 175_800_000_000,     // × 8: 175.8 GH/s
+      asic:        400_000_000_000,     // 추정: GPU 클러스터 × 2.3
+      cloud_farm:  175_800_000_000,
+      quantum:     10_000_000_000_000,
+    },
+    sha512: {
+      pc:          200_000_000,
+      gpu_single:  7_483_000_000,       // Hashcat 실측: 7.48 GH/s
+      gpu_cluster: 59_864_000_000,      // × 8: 59.9 GH/s
+      asic:        138_000_000_000,     // 추정: GPU 클러스터 × 2.3
+      cloud_farm:  59_864_000_000,
+      quantum:     10_000_000_000_000,
+    },
+    bcrypt: {
+      pc:          100,
+      gpu_single:  1_437,               // Hashcat 환산: CF=5(184kH/s) ÷ 2^7 = ~1,437 H/s
+      gpu_cluster: 11_500,              // × 8
+      asic:        11_500,              // 메모리 하드 — ASIC 이점 없음
+      cloud_farm:  11_500,
+      quantum:     10_000_000,
+    },
+    scrypt: {
+      pc:          50,
+      gpu_single:  3_563,               // Hashcat 환산: N=16384(7,126H/s) ÷ 2 = ~3,563 H/s
+      gpu_cluster: 28_500,              // × 8
+      asic:        28_500,              // 메모리 하드 — ASIC 이점 없음
+      cloud_farm:  28_500,
+      quantum:     1_000_000,
+    },
+    argon2id: {
+      pc:          10,
+      gpu_single:  50,                  // Hashcat 미포함 — 현행 유지
+      gpu_cluster: 400,                 // × 8 추정
+      asic:        400,                 // 메모리 하드 — ASIC 이점 없음
+      cloud_farm:  400,
+      quantum:     500_000,
+    },
   },
 
   /* ══════════════════════════════════════════════════════════

@@ -172,12 +172,54 @@ export const ALGORITHMS = [
 
 /**
  * 6. 성능 벤치마크 데이터
+ *
+ * [v2 교정] Hashcat v6.2.6 RTX 4090 공개 벤치마크 기반으로 수치 교정
+ *   출처: https://gist.github.com/Chick3nman/32e662a5bb63bc4f51b847bb422222fd
+ *   - gpu_single : RTX 4090 단일 실측값
+ *   - gpu_cluster: RTX 4090 × 8 (선형 스케일)
+ *   - gpu         : Intelligence Hub "GPU CLUSTER" 표시용 (gpu_cluster와 동일)
  */
 export const HASH_RATES = {
-  md5: { pc: 1e9, gpu: 1.64e10, quantum: 1e14 },
-  sha256: { pc: 5e8, gpu: 3.5e9, quantum: 1e13 },
-  sha512: { pc: 2e8, gpu: 3.5e9, quantum: 1e13 },
-  bcrypt: { pc: 100, gpu: 5000, quantum: 1e7 },
-  scrypt: { pc: 50, gpu: 500, quantum: 1e6 },
-  argon2id: { pc: 10, gpu: 50, quantum: 5e5 }
+  md5: {
+    pc:          1_000_000_000,
+    gpu_single:  164_100_000_000,
+    gpu_cluster: 1_312_800_000_000,
+    gpu:         1_312_800_000_000,   // Intelligence Hub GPU CLUSTER 표시용
+    quantum:     100_000_000_000_000,
+  },
+  sha256: {
+    pc:          500_000_000,
+    gpu_single:  21_975_000_000,
+    gpu_cluster: 175_800_000_000,
+    gpu:         175_800_000_000,
+    quantum:     10_000_000_000_000,
+  },
+  sha512: {
+    pc:          200_000_000,
+    gpu_single:  7_483_000_000,
+    gpu_cluster: 59_864_000_000,
+    gpu:         59_864_000_000,
+    quantum:     10_000_000_000_000,
+  },
+  bcrypt: {
+    pc:          100,
+    gpu_single:  1_437,
+    gpu_cluster: 11_500,
+    gpu:         11_500,
+    quantum:     10_000_000,
+  },
+  scrypt: {
+    pc:          50,
+    gpu_single:  3_563,
+    gpu_cluster: 28_500,
+    gpu:         28_500,
+    quantum:     1_000_000,
+  },
+  argon2id: {
+    pc:          10,
+    gpu_single:  50,
+    gpu_cluster: 400,
+    gpu:         400,
+    quantum:     500_000,
+  },
 };
