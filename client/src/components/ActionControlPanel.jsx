@@ -217,7 +217,7 @@ const ActionControlPanel = ({ engine }) => {
                   const method = ATTACK_METHODS.find(m => m.id === selectedAttackMethod);
                   const params = ATTACK_PARAMS[selectedAttackMethod] || { params: [], ranges: {} };
                   return (
-                    <motion.div key="attack-params" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col gap-4 h-full">
+                    <motion.div key="attack-params" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col gap-4 flex-1 min-h-0">
                       <div className="flex items-center gap-2 px-1 text-brand-danger">
                         <Sliders size={12}/><p className="text-[11px] font-black font-mono uppercase tracking-widest">Adjust Parameters</p>
                       </div>
@@ -243,7 +243,7 @@ const ActionControlPanel = ({ engine }) => {
                           );
                         })}
                       </div>
-                      <button onClick={() => setSelectedHardware(true)} className="w-full bg-brand-danger/10 border-2 border-brand-danger/20 py-3.5 rounded-xl font-black text-brand-danger text-[11px] font-mono tracking-widest flex items-center justify-center gap-2 mt-auto">
+                      <button onClick={() => setSelectedHardware(true)} className="w-full bg-brand-danger/10 border-2 border-brand-danger/20 py-3.5 rounded-xl font-black text-brand-danger text-[11px] shrink-0 font-mono tracking-widest flex items-center justify-center gap-2 mt-auto">
                         HARDWARE SELECT <ChevronRight size={14}/>
                       </button>
                     </motion.div>
@@ -251,7 +251,7 @@ const ActionControlPanel = ({ engine }) => {
                 })()
               ) : (
                 /* 하드웨어 선택 및 분석 시작 */
-                <motion.div key="hw-choice" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col gap-4 h-full">
+                <motion.div key="hw-choice" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col gap-4 flex-1 min-h-0">
                   <div className="flex-1 overflow-y-auto space-y-2 custom-scrollbar pr-1">
                     {HARDWARE_OPTIONS.map(hw => (
                       <button 
@@ -272,10 +272,10 @@ const ActionControlPanel = ({ engine }) => {
                     ))}
                   </div>
                   {/* [수정] 클릭 시 로딩 상태 적용 */}
-                  <button 
+                  <button
                     disabled={isHashing}
-                    onClick={() => handleAttackAction(startAttack)} 
-                    className="w-full bg-brand-danger py-3.5 rounded-xl font-black text-white text-xs font-mono tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-brand-danger/20 disabled:opacity-50"
+                    onClick={() => handleAttackAction(startAttack)}
+                    className="w-full bg-brand-danger py-3.5 rounded-xl font-black text-white text-xs shrink-0 font-mono tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-brand-danger/20 disabled:opacity-50"
                   >
                     {isHashing ? <RefreshCw size={14} className="animate-spin" /> : <Sword size={14}/>}
                     {isHashing ? 'ANALYZING...' : 'INITIATE ATTACK'}
