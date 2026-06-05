@@ -25,23 +25,58 @@
 
 본 프로젝트는 **Hybrid Client-Server 아키텍처**를 채택했습니다.
 
-```
-브라우저 (Client)
-  ├── hash-wasm으로 실제 해싱 연산 수행 (scrypt / argon2id / bcrypt / sha / md5)
-  ├── 기기 사양 자동 감지 → 파라미터 안전 상한 적용
-  └── 해시값만 서버로 전달 (평문은 네트워크를 타지 않음)
+```mermaid
+flowchart LR
+    subgraph Client["🌐 브라우저 (Client)"]
+        direction TB
+        C1["hash-wasm<br/>실제 해싱 연산<br/>scrypt · argon2id · bcrypt · sha · md5"]
+        C2["기기 사양 자동 감지<br/>파라미터 안전 상한 적용"]
+        C1 --- C2
+    end
 
-서버 (Node.js + Express + Socket.io)
-  ├── 수신한 해시값 포맷 검증 (hashInspector)
-  ├── 8가지 공격 시뮬레이션 엔진 실행 (physicsEngine 기반 수식 계산)
-  ├── 실시간 공격 로그 소켓 스트리밍
-  └── 정적 파일 서빙 (React 빌드 결과물)
+    subgraph Server["⚙️ 서버 (Node.js · Express · Socket.io)"]
+        direction TB
+        S1["hashInspector<br/>해시값 포맷 검증"]
+        S2["physicsEngine<br/>8가지 공격 시뮬레이션"]
+        S3["Socket.io<br/>실시간 로그 스트리밍"]
+        S1 --> S2 --> S3
+    end
+
+    Client -- "🔒 해시값만 전달<br/>(평문은 네트워크 ✗)" --> Server
+    Server -- "📡 공격 로그 · 분석 리포트" --> Client
 ```
 
 **핵심 설계 원칙**
 - 해싱은 브라우저에서 — 서버 메모리 압박 없이 어떤 파라미터 조합도 처리 가능
 - 평문 비밀번호는 네트워크를 타지 않음
 - 공격 분석은 서버에서 — 물리 기반 수식으로 정확한 크랙 시간 계산
+
+### 데이터 흐름
+
+해싱부터 공격 분석까지의 전체 흐름입니다. **평문(Plaintext)은 브라우저를 벗어나지 않으며**, 서버로는 해시값만 전달됩니다.
+
+```mermaid
+sequenceDiagram
+    participant U as 👤 사용자
+    participant B as 🌐 브라우저
+    participant S as ⚙️ 서버
+
+    U->>B: 비밀번호 입력
+    Note over B: hash-wasm으로<br/>로컬 해싱 연산
+    B->>S: submit_hash (해시값만)
+    Note over B,S: 🔒 평문은 전송되지 않음
+    S->>S: 해시 포맷 검증 후 세션 저장
+    S-->>B: hash_result (방어막 생성 완료)
+
+    U->>B: 공격 기법 · 하드웨어 선택
+    B->>S: start_attack
+    Note over S: physicsEngine<br/>크랙 시간 계산
+    loop 실시간 스트리밍
+        S-->>B: log (공격 진행 로그)
+    end
+    S-->>B: attack_analysis_result (분석 리포트)
+    B->>U: 등급 · 크랙 시간 시각화
+```
 
 ---
 
@@ -107,9 +142,32 @@
 - 서버는 해시값의 포맷과 파라미터 일관성만 검증
 
 **서버 보호 (Shield Guard)**
-- 메모리 세이프가드: RSS 70% 초과 시 파라미터 자동 하향
-- 서킷 브레이커: RSS 85% 초과 시 요청 차단 (10초 후 자동 해제)
-- Rate Limit: 공격 시뮬레이션 5회/분, 해싱 20회/분 (IP별)
+
+RSS 메모리 사용률에 따라 3단계로 서버를 보호합니다. 무료 호스팅(512MB)에서도 안정적으로 동작하도록 설계했습니다.
+
+```mermaid
+stateDiagram-v2
+    [*] --> OK
+    OK --> SAFEGUARD: RSS ≥ 70%
+    SAFEGUARD --> OK: RSS < 70%
+    SAFEGUARD --> CIRCUIT_BREAKER: RSS ≥ 85%
+    CIRCUIT_BREAKER --> OK: 10초 쿨다운 후 자동 해제
+
+    note right of OK
+        정상 — 요청 그대로 처리
+    end note
+    note right of SAFEGUARD
+        해싱 파라미터 자동 하향
+        + GC 적극 호출
+    end note
+    note right of CIRCUIT_BREAKER
+        신규 요청 일시 차단
+    end note
+```
+
+- **메모리 세이프가드**: RSS 70% 초과 시 파라미터 자동 하향
+- **서킷 브레이커**: RSS 85% 초과 시 요청 차단 (10초 후 자동 해제)
+- **Rate Limit**: 공격 시뮬레이션 5회/분, 해싱 20회/분 (IP별)
 
 **환경 변수 분리**
 - `SYSTEM_SECRET_PEPPER` — 서버 환경 변수로만 관리, 코드에 미포함
