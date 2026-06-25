@@ -8,8 +8,8 @@
 
 🔗 **[shieldbox-io.onrender.com](https://shieldbox-io.onrender.com)**
 
-> 💡 **이 프로젝트의 핵심은 [🔒 보안 설계](#-보안-설계)와 [🔬 physicsEngine 수치 검증](#-physicsengine-수치-검증)입니다.**
-> Hashcat 실측 벤치마크 대비 **오차 0.1%까지 교정한 과정**과, 검증 불가능한 영역을 "정밀한 척 포장하지 않은" 설계 판단을 담았습니다.
+> 💡 **가장 신경 쓴 부분은 [🔒 보안 설계](#-보안-설계)와 [🔬 physicsEngine 수치 검증](#-physicsengine-수치-검증)입니다.**
+> 배포 중 실제로 터졌던 메모리 문제, 잘못 설정했던 해시 속도 값, 그리고 한동안 작동하지 않고 있었던 검증 기능까지 — 발견하고 고친 과정을 그대로 남겼습니다.
 
 ## 📑 목차
 
@@ -53,7 +53,7 @@ flowchart LR
 **핵심 설계 원칙**
 - 해싱은 브라우저에서 — 서버 메모리 압박 없이 어떤 파라미터 조합도 처리 가능
 - 평문 비밀번호는 네트워크를 타지 않음
-- 공격 분석은 서버에서 — 물리 기반 수식으로 정확한 크랙 시간 계산
+- 공격 분석은 서버에서 — 탐색 공간 기반 수식으로 크랙 시간 추정
 
 ### 데이터 흐름
 
@@ -82,6 +82,8 @@ sequenceDiagram
     B->>U: 등급 · 크랙 시간 시각화
 ```
 
+> 참고: 공격 로그는 200ms 간격으로 한 줄씩 전송됩니다. 실제 분석(`engine.analyze()`)은 동기적으로 즉시 끝나며, 이 간격은 점진적으로 계산되는 과정을 보여주기 위한 것이 아니라 터미널처럼 로그가 흐르는 느낌을 주기 위한 의도적인 페이싱입니다.
+
 ---
 
 ## 🚀 핵심 기능
@@ -104,7 +106,7 @@ sequenceDiagram
 - 기기 사양 자동 감지 → 저사양 환경에서 파라미터 자동 하향 안내
 
 ### 2. ⚔️ 8가지 공격 시뮬레이션
-물리 기반 수식(physicsEngine)으로 실제 크랙 시간을 계산합니다.
+탐색 공간·해시 속도 기반 수식(physicsEngine)으로 크랙 시간을 추정합니다.
 
 | 공격 기법 | 설명 |
 |---------|------|
@@ -173,6 +175,16 @@ stateDiagram-v2
 - **서킷 브레이커**: RSS 85% 초과 시 요청 차단 (10초 후 자동 해제)
 - **Rate Limit**: 공격 시뮬레이션 5회/분, 해싱 20회/분 (IP별)
 
+**가정과 대응**
+
+위 가드들은 막연한 "방어"가 아니라 구체적인 악용 시나리오를 가정하고 만들었습니다.
+
+| 가정 | 대응 |
+|------|------|
+| 한 사용자가 무거운 파라미터(예: argon2id 512MB)로 짧은 시간에 여러 번 해싱·공격 요청을 보낼 수 있다 | IP별 Rate Limit (해싱 20회/분, 공격 5회/분) |
+| 다수의 무거운 요청이 동시에 몰려 서버 메모리가 고갈될 수 있다 | RSS 기반 3단계 가드 — 70%에서 파라미터 하향, 85%에서 신규 요청 차단 |
+| 실시간 크랙 검증 기능(아래) 자체가 무거운 알고리즘으로 악용되어 이벤트 루프를 막을 수 있다 | 알고리즘별 연산 비용에 반비례하는 시도 횟수 상한 ([🔓 실시간 충돌 검증](#-실시간-충돌-검증) 참고) |
+
 **환경 변수 분리**
 - `.env` gitignore 처리
 
@@ -180,100 +192,26 @@ stateDiagram-v2
 
 ## 🔬 physicsEngine 수치 검증
 
-ShieldBox의 크랙 시간 계산은 physicsEngine이 담당합니다. 이 엔진이 출력하는 수치가 실제 공격 환경과 얼마나 일치하는지 검증하고 교정한 과정을 기록합니다.
+먼저 이름에 대한 정정: `physicsEngine`은 실제 물리 시뮬레이션이 아니라 **탐색 공간(94ⁿ) ÷ 해시 속도 × 알고리즘별 work factor**로 크랙 시간을 추정하는 계산기입니다. 이름은 비유고, 이 섹션에서 한 일도 "독립적인 정확도 검증"이 아니라 **잘못 설정돼 있던 해시 속도 테이블을 Hashcat 공개 수치로 교정한 과정**입니다.
 
-### 검증 방법
+### 발견한 문제
 
-`server/debug-tester.js`를 작성해 physicsEngine의 계산값을 **Hashcat v6.2.6 RTX 4090 공개 벤치마크** ([Chick3nman, 2022](https://gist.github.com/Chick3nman/32e662a5bb63bc4f51b847bb422222fd))와 직접 비교했습니다.
-
-```bash
-node server/debug-tester.js
-```
-
-### 발견된 문제 (v1)
-
-초기 `hashRates` 설정에는 두 가지 구조적 문제가 있었습니다.
+`server/debug-tester.js`로 physicsEngine이 쓰는 `hashRates` 값을 **Hashcat v6.2.6 RTX 4090 공개 벤치마크** ([Chick3nman, 2022](https://gist.github.com/Chick3nman/32e662a5bb63bc4f51b847bb422222fd))와 대조해보니, 두 가지가 잘못돼 있었습니다.
 
 | 문제 | 내용 | 영향 |
 |------|------|------|
-| 하드웨어 미분리 | `gpu_single` (RTX 4090 × 1)과 `gpu_cluster` (× 8)가 동일한 `rates.gpu` 단일값 사용 | Single과 Cluster 선택 시 동일한 크랙 시간 출력 |
-| 속도값 부정확 | MD5: 16.4 GH/s (실측 164.1), scrypt: 500 H/s (실측 3,563) 등 최대 80x 오차 | 일부 알고리즘을 실제보다 과도하게 안전하게 평가 |
+| 하드웨어 미분리 | `gpu_single`(RTX 4090 × 1)과 `gpu_cluster`(× 8)가 동일한 `rates.gpu` 단일값 사용 | Single과 Cluster 선택 시 동일한 크랙 시간 출력 |
+| 속도값 부정확 | MD5: 16.4 GH/s로 설정돼 있었지만 Hashcat 실측은 164.1 GH/s(10배), scrypt도 약 7배 차이 등 | 일부 알고리즘을 실제보다 훨씬 안전하게(느리게 깨지는 것처럼) 평가 |
 
-### 수정 내용
-
-**`shield-config.js` — hashRates 구조 변경 및 Hashcat 실측값 적용**
-
-| 알고리즘 | 항목 | v1 (구) | v2 (교정) | 출처 |
-|---------|------|---------|----------|------|
-| MD5 | GPU Single | 16.4 GH/s | **164.1 GH/s** | Hashcat Mode 0 실측 |
-| MD5 | GPU Cluster | 16.4 GH/s | **1.31 TH/s** | × 8 선형 스케일 |
-| SHA-256 | GPU Single | 3.5 GH/s | **21.97 GH/s** | Hashcat Mode 1400 실측 |
-| SHA-512 | GPU Single | 3.5 GH/s | **7.48 GH/s** | Hashcat Mode 1700 실측 |
-| bcrypt CF=12 | GPU Single | 5,000 H/s | **1,437 H/s** | Hashcat Mode 3200 (CF=5: 184kH/s ÷ 2⁷) |
-| scrypt 32MB | GPU Single | 500 H/s | **3,563 H/s** | Hashcat Mode 8900 (N=16384: 7,126 ÷ 2) |
-
-**`physicsEngine.js` — hwRate 매핑 변경**
-
-```js
-// v1: 모든 GPU 계열을 단일 rates.gpu로 처리
-const hwRate = hardware.includes('gpu') ? rates.gpu : rates.pc;
-
-// v2: hardware key를 rates 객체에서 직접 참조
-const hwRate = rates[hardware] ?? (hardware.includes('gpu') ? rates.gpu_single : rates.pc);
+```bash
+node server/debug-tester.js   # 알고리즘·하드웨어별 ShieldBox 추정값과 Hashcat 수치를 나란히 출력
 ```
 
-### 교정 후 검증 결과
+### 고친 내용과 그 의미
 
-기준: 11자 비밀번호(`password123`), 탐색 공간: 94¹¹
+`hashRates`를 하드웨어별로 분리하고 Hashcat 실측값으로 교체한 뒤, `physicsEngine.js`의 속도 매핑도 `hardware` 키를 직접 참조하도록 바꿨습니다. 그 결과 ShieldBox의 추정치와 "Hashcat 수치를 그대로 넣고 같은 공식으로 계산한 값"이 5개 알고리즘(MD5·SHA-256·SHA-512·bcrypt·scrypt) 전 하드웨어 조합에서 일치합니다 — 다만 이건 같은 rate를 같은 수식에 넣었으니 당연한 결과이고, 진짜 의미는 **"이전에는 틀린 rate를 쓰고 있었다"는 사실**입니다. 자세한 교정 전/후 수치와 알고리즘별 work factor 산출 근거, Quantum 하드웨어를 의도적으로 교정하지 않은 이유는 [docs/VERIFICATION.md](docs/VERIFICATION.md)에 정리했습니다.
 
-| 알고리즘 | 하드웨어 | ShieldBox 예상 | Hashcat 기반 실측 | 배율 |
-|---------|---------|--------------|----------------|------|
-| MD5 | GPU Single (RTX 4090) | 25.71분 | 25.71분 | **1.00x** |
-| MD5 | GPU Cluster (× 8) | 3.21분 | 3.21분 | **1.00x** |
-| SHA-256 | GPU Single | 3,650년 | 3,650년 | **1.00x** |
-| SHA-256 | GPU Cluster | 456년 | 456년 | **1.00x** |
-| SHA-512 | GPU Single | 1.07만년 | 1.07만년 | **1.00x** |
-| bcrypt CF=12 | GPU Single | 558억년 | 558억년 | **1.00x** |
-| bcrypt CF=12 | GPU Cluster | 69.75억년 | 69.73억년 | **1.00x** |
-| scrypt 32MB | GPU Single | 225억년 | 225억년 | **1.00x** |
-| scrypt 32MB | GPU Cluster | 28.15억년 | 28.14억년 | **1.00x** |
-
-비교 가능한 5개 알고리즘(MD5·SHA-256·SHA-512·bcrypt·scrypt) 전 하드웨어 조합에서 **Hashcat 실측 대비 오차 0.1% 이내**를 달성했습니다.
-
-> **argon2id**: Hashcat 공개 벤치마크에 GPU 크래킹 데이터가 없어 비교 불가. 메모리 하드 설계 특성상 GPU 가속이 구조적으로 제한되며, 현행 추정값 유지.
-
-### 하드웨어 티어별 산출 근거
-
-6개 하드웨어 옵션은 **실측 교정값(GPU)을 기준점**으로 삼고, 나머지를 명시적 근거에 따라 파생·추정했습니다. "어디까지가 실측이고 어디부터가 추정인가"를 구분하는 것이 핵심입니다.
-
-| 하드웨어 | 산출 근거 | 분류 |
-|---------|---------|------|
-| GPU Single (RTX 4090) | Hashcat v6.2.6 실측 벤치마크 | ✅ Calibrated |
-| GPU Cluster (8× RTX 4090) | GPU Single × 8 (선형 스케일) | ✅ Calibrated |
-| Cloud Farm (AWS p4d.24xl) | 8× A100 ≈ GPU 클러스터 동급으로 매핑 | 〰 Derived |
-| ASIC Rig | 빠른 해시(MD5/SHA): GPU 클러스터 ×2.3 / 메모리 하드(bcrypt·scrypt·argon2id): ASIC 이점 없어 클러스터와 동일 | 〰 Derived |
-| Single CPU (Ryzen 9 7950X) | 알고리즘별 CPU 단일 코어 추정치 (Hashcat CPU 벤치 미반영) | 〰 Estimated |
-| Quantum (이론) | 이론적 상한 상수 (실측 calibration 불가 — 아래 참조) | ⚠ Theoretical |
-
-> **ASIC가 메모리 하드 함수에 이점이 없는 이유**: bcrypt·scrypt·argon2id는 설계상 대량의 메모리 대역폭을 요구하므로, 연산 회로를 특화해도 메모리 병목이 그대로 남습니다. ASIC의 강점은 연산이 단순한 MD5/SHA 계열에만 적용됩니다.
-
-### Quantum 하드웨어를 "교정"하지 않은 이유
-
-하드웨어 옵션에는 `Quantum (이론)`이 포함되어 있습니다. 이 항목은 **의도적으로 실측 교정 대상에서 제외**했으며, 그 이유 자체가 하나의 설계 판단입니다.
-
-**핵심: 교정할 실측 데이터가 존재하지 않습니다.**
-
-CPU·GPU 속도는 Hashcat이라는 실측 기준이 있어 오차 0.1%까지 맞출 수 있었습니다. 그러나 양자 컴퓨터의 실제 해시 크래킹 벤치마크는 **세상에 존재하지 않습니다.** 따라서 어떤 수치를 넣어도 그것은 추측입니다.
-
-**그렇다면 Grover 알고리즘으로 √N을 구현하면 되지 않나?**
-
-Grover 알고리즘은 탐색 공간을 제곱근으로 줄여줍니다(94¹¹ ≈ 2⁷² → 2³⁶). 하지만 실제 크랙 시간을 계산하려면 결국 **양자 게이트의 처리 속도**라는 상수가 필요한데, 이 값은 학계에서도 수십 자릿수 단위로 추정이 엇갈립니다. 즉, √N 공식을 넣더라도 그 안의 게이트 속도는 여전히 임의의 추측값이며, 결과적으로 **"정밀한 수학"으로 포장된 추측**이 될 뿐입니다.
-
-게다가 ShieldBox가 보안 강화를 권장하는 **메모리 하드 함수(argon2id, scrypt)는 Grover 오라클을 구성하는 것 자체가 비현실적**이라고 평가됩니다. 순진하게 √N을 적용하면 정작 가장 안전한 알고리즘들의 위협을 과장하게 됩니다.
-
-**결론: 거짓 정밀도(false precision)보다 명시적 이론 상수를 선택했습니다.**
-
-Quantum은 calibration된 실측값이 아니라, "이론적 미래 하드웨어에서도 강력한 암호는 즉시 뚫리지 않는다"는 **방향성을 전달하는 교육용 상한 지표**입니다. UI에 `(이론)` 라벨을 붙여 calibration된 다른 하드웨어와 명확히 구분했습니다. 검증할 수 없는 값을 정밀한 척 포장하지 않는 것 — 이것이 calibration 섹션과 동일한 원칙입니다.
+> **argon2id**: Hashcat 공개 벤치마크에 GPU 크래킹 데이터가 없어 비교 자체가 불가능합니다. 현행 추정값을 그대로 쓰고 있습니다.
 
 ---
 
