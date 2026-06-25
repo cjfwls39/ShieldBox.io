@@ -17,10 +17,11 @@
 2. [🚀 핵심 기능](#-핵심-기능)
 3. [🔒 보안 설계](#-보안-설계) ⭐
 4. [🔬 physicsEngine 수치 검증](#-physicsengine-수치-검증) ⭐
-5. [🛠️ 기술 스택](#️-기술-스택)
-6. [📂 시작하기](#-시작하기)
-7. [📁 프로젝트 구조](#-프로젝트-구조)
-8. [📄 라이선스](#-라이선스)
+5. [🔓 실시간 충돌 검증](#-실시간-충돌-검증) ⭐
+6. [🛠️ 기술 스택](#️-기술-스택)
+7. [📂 시작하기](#-시작하기)
+8. [📁 프로젝트 구조](#-프로젝트-구조)
+9. [📄 라이선스](#-라이선스)
 
 ---
 
@@ -39,7 +40,7 @@ flowchart LR
 
     subgraph Server["⚙️ 서버 (Node.js · Express · Socket.io)"]
         direction TB
-        S1["hashInspector<br/>해시값 포맷 검증"]
+        S1["hashInspector<br/>포맷 검증 · 실시간 충돌 검증"]
         S2["physicsEngine<br/>8가지 공격 시뮬레이션"]
         S3["Socket.io<br/>실시간 로그 스트리밍"]
         S1 --> S2 --> S3
@@ -95,11 +96,11 @@ sequenceDiagram
 | bcrypt | A | Cost Factor 기반 적응형 해싱. 미래 하드웨어 발전에 유연하게 대응 |
 | SHA-512 | B | 범용 해시. Salt 병행 필수 |
 | SHA-256 | B | 인터넷 표준 해시. 단독 사용 시 취약 |
-| MD5 | D | 충돌 저항성 붕괴. 레거시 용도로만 존재 |
+| MD5 | D | 충돌 저항성 붕괴. 레거시 용도로만 존재 (Salt 토글은 가능하나 알고리즘 자체의 충돌 취약성은 해소되지 않음) |
 
 **파라미터 설정**
 - memoryCost, timeCost, parallelism, blockSize, costFactor 등 알고리즘별 세부 조정
-- Salt / Pepper 독립 제어
+- Salt / Pepper 독립 제어 — 6자 이하 비밀번호는 [실시간 충돌 검증](#-실시간-충돌-검증)으로 직접 확인 가능
 - 기기 사양 자동 감지 → 저사양 환경에서 파라미터 자동 하향 안내
 
 ### 2. ⚔️ 8가지 공격 시뮬레이션
@@ -173,7 +174,6 @@ stateDiagram-v2
 - **Rate Limit**: 공격 시뮬레이션 5회/분, 해싱 20회/분 (IP별)
 
 **환경 변수 분리**
-- `SYSTEM_SECRET_PEPPER` — 서버 환경 변수로만 관리, 코드에 미포함
 - `.env` gitignore 처리
 
 ---
@@ -277,6 +277,45 @@ Quantum은 calibration된 실측값이 아니라, "이론적 미래 하드웨어
 
 ---
 
+## 🔓 실시간 충돌 검증
+
+physicsEngine이 "이론적으로 몇 년 걸린다"를 계산하는 영역이라면, 이 기능은 그 반대편에 있습니다. **6자 이하의 짧은 비밀번호(MD5·SHA-256·SHA-512)에 대해 서버가 실제로 전수 대입을 수행해서 평문을 복구하는지 실증**합니다. 추정이 아니라 직접 돌려본 결과입니다.
+
+### 동작 방식
+
+`server/core_logic/hashInspector.js`의 `verifyHash`가 브라우저(`useHashEngine.js`)와 **동일한 알고리즘·Salt·Pepper**로 후보 문자열을 재해싱해서 제출된 해시와 비교합니다. `Brute Force` 공격 시 후보를 `a, b, ..., aa, ab, ...` 순으로 늘려가며 일치하는 순간 평문을 실제로 복구해서 리포트에 표시합니다.
+
+```mermaid
+flowchart LR
+    A["Brute Force 엔진<br/>후보 문자열 생성"] --> B["verifyHash<br/>동일 알고리즘·Salt·Pepper로 재해싱"]
+    B -->|일치| C["평문 복구 성공<br/>리포트에 시도 횟수·평문 노출"]
+    B -->|불일치| D["다음 후보로 계속"]
+```
+
+### 개발 중 발견하고 교정한 문제
+
+검증 코드를 직접 `socket.io` 클라이언트로 호출해보는 과정에서, 이 기능이 **항상 실패하고 있었다는 것**을 발견했습니다.
+
+| 문제 | 내용 | 영향 |
+|------|------|------|
+| 해시 포맷 불일치 | `verifyHash`가 `algo$i=N$s=salt$digest`(PBKDF2 기반) 포맷을 가정했지만, 클라이언트는 실제로 `algo$salt$digest` 3등분 포맷에 자체 반복 체이닝을 사용 | 길이·내용과 무관하게 평문 복구가 **항상 실패** |
+| Pepper 미전달 | 클라이언트가 해싱에는 Pepper를 사용하지만, 서버로 보내는 설정 객체에서 Pepper 값을 빈 문자열로 지움 | 서버가 Pepper를 알 수 없어 검증이 원천적으로 불가능 |
+| 동기 연산 폭주 위험 | Salt 문자열을 반복 횟수로 잘못 해석해 `pbkdf2Sync`에 거대한 수가 들어가면, 최대 50만 회 후보 시도가 동기적으로 실행됨 | 단일 요청이 **서버 전체를 멈춤** (다른 클라이언트 503 재현됨) |
+
+세 가지를 모두 고친 뒤 `socket.io` 클라이언트로 직접 호출해서 재검증했습니다.
+
+| 시나리오 | 결과 |
+|---------|------|
+| MD5 + Pepper 일치 | `found: true`, 74회 시도 후 평문 복구, 리포트에 "🚪 열려 있는 종이 문" 전용 화면 표시 |
+| MD5 + Pepper 불일치(다른 값) | `found: false` — Pepper가 실제로 검증 결과를 바꾼다는 증거 |
+| SHA-256 + Pepper 일치 | `found: true`, 0.9초 내 완료 |
+
+### 가용성 가드
+
+SHA-256/512는 해시 1회당 내부 반복(최대 1,000회)이 있어, MD5와 같은 시도 횟수(50만 회)를 그대로 적용하면 최대 5억 회의 연산이 동기적으로 실행될 수 있습니다. `maxAttempts = max(1000, floor(workBudget / loopCount))`로 알고리즘이 무거울수록 시도 횟수를 비례해서 줄여, 어떤 알고리즘을 골라도 서버가 멈추지 않도록 설계했습니다.
+
+---
+
 ## 🛠️ 기술 스택
 
 | 구분 | 기술 | 사용 목적 |
@@ -302,8 +341,6 @@ cd ShieldBox.io
 
 # 환경 변수 설정
 cp .env.example .env
-# .env 파일에서 SYSTEM_SECRET_PEPPER 값 생성 후 입력
-# node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 # 서버 패키지 설치
 npm install
@@ -334,7 +371,6 @@ npm start
 VITE_BACKEND_URL=http://localhost:4000   # 프론트엔드용
 PORT=4000                                 # 서버 포트
 FRONTEND_URL=http://localhost:5173        # CORS 허용 주소
-SYSTEM_SECRET_PEPPER=                     # 32자 이상 무작위 문자열
 ```
 
 ---

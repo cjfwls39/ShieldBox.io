@@ -3,12 +3,12 @@
  * [위치] server/core_logic/securityJudge.js
  */
 
-const { ALGO_CEILING } = require('./cryptoRegistry'); 
-const policy = require('../data/configs/security_policy.json');
+const { ALGO_CEILING } = require('./cryptoRegistry');
+const cfg = require('../config/shield-config');
 
-const GRADE_THRESHOLDS = policy.grade_thresholds;
-const GRADE_ORDER = policy.grade_order;
-const SCORE_MAPPING = policy.score_mapping;
+const GRADE_THRESHOLDS = cfg.judge.gradeThresholds;
+const GRADE_ORDER = cfg.judge.gradeOrder;
+const SCORE_MAPPING = cfg.judge.scoreMapping;
 
 const minGrade = (g1, g2) => {
   const idx1 = GRADE_ORDER.indexOf(g1);
@@ -42,10 +42,10 @@ const finalizeGrade = (seconds, algorithm, pwLen, config = {}) => {
 
   const penalties = [];
 
-  if (pwLen < 8) {
+  if (pwLen < cfg.judge.passwordLength.criticalMinimum) {
     finalGrade = 'F';
     penalties.push("치명적인 키 공간(Entropy) 부족 (8자 미만)");
-  } else if (pwLen < 10) {
+  } else if (pwLen < cfg.judge.passwordLength.recommendedMinimum) {
     const currentIdx = GRADE_ORDER.indexOf(finalGrade);
     finalGrade = GRADE_ORDER[Math.max(0, currentIdx - 1)];
     penalties.push("권장 보안 기준 미달의 암호 길이 (10자 미만)");

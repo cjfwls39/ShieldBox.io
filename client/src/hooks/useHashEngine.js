@@ -243,7 +243,10 @@ export const computeHash = async (password, config) => {
     }
 
     case 'md5': {
-      hash = await md5(input);
+      const useSalt = config.useSalt !== false;
+      const saltHex = useSalt ? toHex(randomBytes(16)) : '';
+      const digest  = await md5(input + saltHex);
+      hash = `md5$${saltHex}$${digest}`;
       break;
     }
 
@@ -254,7 +257,9 @@ export const computeHash = async (password, config) => {
   return {
     hash,
     algorithm,
-    config: { ...clamped, algorithm, usePepper, pepperValue: '' }, // pepperValue 제거
+    // pepperValue는 salt와 동일하게 세션 동안만 쓰이는 값 — 서버에도 그대로 전달해야
+    // 실시간 충돌 테스트(actualBruteForce)가 pepper를 반영해 검증할 수 있음
+    config: { ...clamped, algorithm, usePepper, pepperValue },
     warnings,
     profile,
   };

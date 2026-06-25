@@ -151,7 +151,7 @@
       "technicalInsight": [
         "페퍼는 일반적으로 서버의 환경 변수(.env 파일)나 AWS Secrets Manager, HashiCorp Vault 같은 비밀 관리 서비스에 저장합니다.",
         "페퍼 값이 노출되거나 변경되면 모든 사용자가 재인증이 필요합니다. 페퍼 버전 관리 전략이 필요합니다.",
-        "ShieldBox.io에서는 server/.env의 SYSTEM_SECRET_PEPPER가 바로 이 역할을 합니다."
+        "ShieldBox.io는 영구 저장이 없는 시뮬레이터라서, 사용자가 입력하거나 생성한 페퍼 값을 세션 동안만 사용하고 즉시 폐기합니다."
       ],
       "learningGuide": [
         "솔트 vs 페퍼 핵심 차이: 솔트는 사용자마다 다르고 DB에 저장됩니다. 페퍼는 전역으로 하나이고 DB 밖에 저장됩니다.",
@@ -326,7 +326,7 @@
       ],
       "beginnerTip": "은행 금고 비유: 솔트는 '각 고객마다 다른 금고'이고, 페퍼는 '금고가 있는 방의 잠금 코드'입니다. 금고를 훔쳐가도, 방에 들어오는 코드가 없으면 열 수 없습니다.",
       "technicalInsight": [
-        "페퍼는 서버 .env 파일의 SYSTEM_SECRET_PEPPER 변수, 또는 AWS Secrets Manager, HashiCorp Vault에 저장합니다.",
+        "페퍼는 서버 환경 변수나 AWS Secrets Manager, HashiCorp Vault 같은 비밀 관리 서비스에 저장합니다.",
         "페퍼 값을 주기적으로 교체(Pepper Rotation)하면 보안이 더 강화됩니다. 단, 기존 사용자 재인증이 필요합니다.",
         "페퍼가 있으면 공격자는 DB 데이터만으로는 오프라인 크랙 자체가 불가능합니다. 서버에 직접 요청해야 하며, 이는 rate limiting으로 통제 가능합니다."
       ],

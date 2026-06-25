@@ -23,8 +23,18 @@ const CHARSET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!
 
 /**
  * 실시간 해시 대입 시뮬레이션 (짧은 암호 전용 - 시각적 증명용)
+ *
+ * sha256/sha512는 해시 1회당 내부 반복(loopCount, 최대 1000회)이 있어
+ * md5(loopCount=1)와 동일한 시도 횟수를 그대로 곱하면 서버가 동기적으로
+ * 오래 멈출 수 있다. "내부 해시 연산 총량" 기준으로 시도 횟수를 역산해서
+ * 알고리즘이 무거울수록 시도 횟수를 비례해서 줄인다.
  */
-const actualBruteForce = (targetHash, algorithm, config, maxAttempts = cfg.attacks.bruteForce.realtimeMaxTries) => {
+const actualBruteForce = (targetHash, algorithm, config) => {
+  const loopCount = (algorithm === 'sha256' || algorithm === 'sha512')
+    ? Math.min(config.iterations || 100000, 1000)
+    : 1;
+  const maxAttempts = Math.max(1000, Math.floor(cfg.attacks.bruteForce.realtimeMaxTries / loopCount));
+
   let attempts = 0;
   for (let len = 1; len <= 6; len++) {
     const indices = new Array(len).fill(0);
@@ -69,7 +79,7 @@ const analyze = (data) => {
   const crackLabel = formatSeconds(crackSec);
 
   // 3. [Simulation] 6자 이하 실시간 충돌 테스트
-  const doActual = canActuallyVerify(algorithm, pwLen <= cfg.attacks.bruteForce.realtimeMaxLen) && targetHash;
+  const doActual = canActuallyVerify(algorithm, pwLen) && targetHash;
   let actualResult = null;
   if (doActual) {
     logs.push(`[Brute Force] 실시간 충돌 테스트: ${pwLen}자 Short Password에 대한 고속 루프 가동...`);
@@ -104,6 +114,7 @@ const analyze = (data) => {
     algorithm,
     hardware,
     crackSec,
+    actualResult, // 템플릿의 CASE 1(실시간 파훼 성공) 분기가 참조
     gradeLabel: crackLabel, // 템플릿의 narrative와 evidence에서 사용
     cryptoAnalysis: `Algorithm: ${algorithm.toUpperCase()} | Hash Rate: ${threads} Threads Analysis`,
     penalties,

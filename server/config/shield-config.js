@@ -124,7 +124,11 @@ const cfg = {
     bruteForce: {
       charsetSize:       72,       // a-z + A-Z + 0-9 + 특수문자
       realtimeMaxLen:    6,        // 실시간 충돌 테스트 대상 최대 길이
-      realtimeMaxTries:  500_000,  // 실시간 테스트 최대 시도 횟수
+      // "내부 해시 연산 총량" 기준 예산. md5(해시 1회당 내부 반복 loopCount=1)는
+      // 그대로 50만 번 시도하고, sha256/512(loopCount 최대 1000)는
+      // maxAttempts = max(1000, floor(realtimeMaxTries / loopCount))로 비례해서 줄어든다.
+      // → 무거운 알고리즘이 서버를 동기적으로 오래 멈추는 것을 방지하는 가용성 가드.
+      realtimeMaxTries:  500_000,
     },
 
     dictionary: {

@@ -76,7 +76,7 @@ const validateHashFormat = (hash, algorithm) => {
     case 'scrypt':   return hash.startsWith('scrypt$') && hash.split('$').length === 6;
     case 'sha256':   return hash.startsWith('sha256$') && hash.split('$').length === 3;
     case 'sha512':   return hash.startsWith('sha512$') && hash.split('$').length === 3;
-    case 'md5':      return /^[a-f0-9]{32}$/.test(hash);
+    case 'md5':      return hash.startsWith('md5$') && hash.split('$').length === 3;
     default:         return false;
   }
 };

@@ -14,13 +14,17 @@ const ALWAYS_HAS_SALT = new Set(['bcrypt', 'scrypt', 'argon2id']);
 
 /**
  * 2. 해시 문자열에서 솔트 존재 여부 및 값 추출
+ *
+ * md5 / sha256 / sha512는 모두 useHashEngine.js(클라이언트)가 만드는
+ * `<algo>$<saltHex>$<digestHex>` 3등분 포맷을 그대로 따른다 (salt 미사용 시 saltHex는 빈 문자열).
+ *
  * @param {string} targetHash - 분석 대상 해시 문자열
  * @param {string} algorithm - 사용된 알고리즘 ID
  * @returns {{ hasSalt: boolean, salt: string|null }}
  */
 const parseSaltFromHash = (targetHash, algorithm) => {
   if (!targetHash) return { hasSalt: false, salt: null };
-  
+
   try {
     // 현대적 알고리즘은 포맷 내부에 솔트가 표준으로 포함되거나 알고리즘이 강제합니다.
     if (algorithm === 'bcrypt' || algorithm === 'argon2id') {
@@ -30,11 +34,8 @@ const parseSaltFromHash = (targetHash, algorithm) => {
     const parts = targetHash.split('$');
     let saltVal = '';
 
-    // 알고리즘별 커스텀 포맷에 따른 솔트 위치 탐색
-    if (algorithm === 'md5') {
-      saltVal = parts[1]?.replace('s=', '') || '';
-    } else if (algorithm === 'sha256' || algorithm === 'sha512') {
-      saltVal = parts[2]?.replace('s=', '') || '';
+    if (algorithm === 'md5' || algorithm === 'sha256' || algorithm === 'sha512') {
+      saltVal = parts[1] || '';
     } else if (algorithm === 'scrypt') {
       // scrypt$N$r$p$salt$hash 포맷 대응
       saltVal = parts[4] || '';
@@ -50,38 +51,45 @@ const parseSaltFromHash = (targetHash, algorithm) => {
 /**
  * 3. 평문 후보와 타겟 해시의 일치 여부 검증
  * 보안을 위해 timingSafeEqual을 사용하여 정보 누출을 방지합니다.
+ *
+ * md5/sha256/sha512는 클라이언트(useHashEngine.js)가 실제로 만드는 해시와
+ * 동일한 알고리즘·포맷으로 재계산해야 한다:
+ *   - md5:           digest = md5(input + salt)                       (1회)
+ *   - sha256/sha512:  digest = 반복 체이닝 — sha(sha(...(input+salt)))   (최대 1000회, PBKDF2 아님)
  */
 const verifyHash = (candidate, targetHash, algorithm, config = {}) => {
   // 내장 솔트 알고리즘은 실시간 대입 검증 속도가 너무 느려 시뮬레이션에서 제외합니다.
   if (ALWAYS_HAS_SALT.has(algorithm) || !targetHash) return false;
-  
+
   try {
     const input = config.usePepper && config.pepperValue ? candidate + config.pepperValue : candidate;
-    
+    const parts = targetHash.split('$');
+    const salt  = parts[1] || '';
+    const actual = Buffer.from(parts[2] || '', 'hex');
+
+    let expected;
+
     if (algorithm === 'md5') {
-      const parts = targetHash.split('$');
-      const salt = parts[1]?.replace('s=', '') || '';
-      const expected = Buffer.from(crypto.createHash('md5').update(input + salt).digest('hex'), 'hex');
-      const actual = Buffer.from(parts[2] || '', 'hex');
-      // 나노초 단위 시간 차를 이용한 타이밍 공격 방어
-      return crypto.timingSafeEqual(actual, expected);
+      expected = Buffer.from(crypto.createHash('md5').update(input + salt).digest('hex'), 'hex');
+    } else if (algorithm === 'sha256' || algorithm === 'sha512') {
+      const loopCount = Math.min(config.iterations || 100000, 1000);
+      let current = input + salt;
+      for (let i = 0; i < loopCount; i++) {
+        current = crypto.createHash(algorithm).update(current).digest('hex');
+      }
+      expected = Buffer.from(current, 'hex');
+    } else {
+      return false;
     }
-    
-    if (algorithm === 'sha256' || algorithm === 'sha512') {
-      const parts = targetHash.split('$');
-      const iterations = parseInt(parts[1]?.replace('i=', '') || '100000');
-      const salt = parts[2]?.replace('s=', '') || '';
-      const digest = algorithm === 'sha256' ? 'sha256' : 'sha512';
-      const keylen = algorithm === 'sha256' ? 32 : 64;
-      
-      const expected = crypto.pbkdf2Sync(input, salt, iterations, keylen, digest);
-      const actual = Buffer.from(parts[3] || '', 'hex');
-      return crypto.timingSafeEqual(actual, expected);
-    }
+
+    // 길이가 다르면 timingSafeEqual이 예외를 던지므로 명시적으로 먼저 걸러낸다.
+    if (actual.length !== expected.length) return false;
+
+    // 나노초 단위 시간 차를 이용한 타이밍 공격 방어
+    return crypto.timingSafeEqual(actual, expected);
   } catch {
     return false;
   }
-  return false;
 };
 
 /**
